@@ -1,4 +1,4 @@
-﻿# InterBuddies
+# InterBuddies
 
 A React + Vite app for meeting people at UBC Vancouver.
 
@@ -27,7 +27,7 @@ Open the URL printed by Vite. Both servers must be running to create a profile. 
 - `#/`: Welcome page with Create profile and Sign in.
 - `#/create-profile`: Four steps: personal details, UBC Vancouver campus details, optional hobbies/sports, then email/password.
 - `#/main`: Registration success and a placeholder for the future main page.
-- `#/sign-in`: Placeholder only; sign-in and authenticated sessions are not implemented yet.
+- `#/sign-in`: Frontend-only test login. Use username `dev` and password `dev` to open the main-page placeholder. This makes no API calls; the preview identity lasts for the browser tab session. Real account sign-in is still pending.
 
 Profile creation calls `POST /api/profiles` and stores the profile in SQLite. The backend hashes passwords; passwords are never saved in browser storage. Answers stay in memory while moving between form steps and reset if you leave or reload the form. A successful registration clears the form by navigating to the main-page placeholder.
 

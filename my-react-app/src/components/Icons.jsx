@@ -1,9 +1,9 @@
 export function BuddyMark({ className }) {
   return (
     <svg className={className} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      <rect x="3" y="8" width="22" height="26" rx="11" stroke="currentColor" strokeWidth="2.5" transform="rotate(-14 14 21)" />
+      <rect x="3" y="8" width="22" height="26" rx="11" stroke="#cc3344" strokeWidth="2.5" transform="rotate(-14 14 21)" />
       <rect x="16" y="6" width="22" height="26" rx="11" fill="currentColor" transform="rotate(14 27 19)" />
-      <path d="M23 18v2m7-2v2m-7 5c2 2 5 2 7 0" stroke="#f7f8f2" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M23 18v2m7-2v2m-7 5c2 2 5 2 7 0" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   )
 }

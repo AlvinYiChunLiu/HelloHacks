@@ -2,18 +2,25 @@
 
 :root {
   font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-  color: #25392e;
-  background: #f7f8f2;
+  color: #1f2937;
+  background: #fffdf7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --paper: #f7f8f2;
-  --ink: #25392e;
-  --green: #35634b;
-  --muted: #65715f;
-  --line: #e0e5d9;
+  --paper: #fffdf7;
+  --ink: #1f2937;
+  --primary: #2457d6;
+  --red: #cc3344;
+  --yellow: #f4c542;
+  --green: #21834f;
+  --blue-light: #eaf1ff;
+  --red-light: #fff0f1;
+  --yellow-light: #fff4c9;
+  --green-light: #e9f7ef;
+  --muted: #5d6470;
+  --line: #e2e5ee;
 }
 
 * {
@@ -41,7 +48,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #8bad75;
+  outline: 3px solid #477bea;
   outline-offset: 4px;
 }
 
@@ -57,6 +64,6 @@ textarea:focus-visible {
 }
 
 ::selection {
-  background: #dce8cc;
-  color: #25392e;
+  background: #fff0b3;
+  color: #1f2937;
 }

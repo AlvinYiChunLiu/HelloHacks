@@ -25,7 +25,7 @@
 .brand-mark {
   width: 39px;
   height: 39px;
-  color: var(--green);
+  color: var(--primary);
 }
 .brand h1 {
   margin: 0;
@@ -56,7 +56,7 @@
 }
 .eyebrow {
   margin: 0 0 19px;
-  color: var(--green);
+  color: var(--primary);
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 2.6px;
@@ -70,7 +70,7 @@
   letter-spacing: -3px;
 }
 .hero h2 span {
-  color: var(--green);
+  color: var(--red);
 }
 .hero-description {
   max-width: 330px;
@@ -91,9 +91,9 @@
   padding: 20px 28px;
   border: 0;
   border-radius: 14px;
-  background: var(--green);
+  background: var(--primary);
   color: #fff;
-  box-shadow: 0 5px 0 #dce4d7;
+  box-shadow: 0 5px 0 #d7e4ff;
   font-size: 20px;
   font-weight: 550;
   text-decoration: none;
@@ -106,16 +106,16 @@
   transition: transform 160ms;
 }
 .welcome-primary:hover {
-  background: #234a3a;
+  background: #1942ad;
   transform: translateY(-2px);
-  box-shadow: 0 7px 0 #dce4d7;
+  box-shadow: 0 7px 0 #d7e4ff;
 }
 .welcome-primary:hover svg {
   transform: translateX(3px);
 }
 .welcome-primary:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #dce4d7;
+  box-shadow: 0 2px 0 #d7e4ff;
 }
 .sign-in-button {
   display: flex;
@@ -126,16 +126,16 @@
   min-height: 50px;
   margin-top: 18px;
   padding: 12px 24px;
-  border: 1px solid #cdd7c8;
+  border: 1px solid #e2b52e;
   border-radius: 12px;
-  color: var(--green);
+  color: var(--primary);
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   transition: background 160ms;
 }
 .sign-in-button:hover {
-  background: #e9ede5;
+  background: #ffe698;
 }
 .hero-note {
   margin: 21px 0 0;
@@ -169,7 +169,7 @@
   width: 70px;
   height: 70px;
   margin-bottom: 28px;
-  color: var(--green);
+  color: var(--primary);
 }
 .placeholder-page h2 {
   max-width: 650px;
@@ -229,4 +229,12 @@
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+.sign-in-button {
+  background: var(--yellow-light);
+  color: var(--ink);
+}
+.site-footer svg {
+  color: var(--red);
 }

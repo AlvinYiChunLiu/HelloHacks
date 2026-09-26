@@ -1,0 +1,15 @@
+.dev-sign-in {
+  display: grid;
+  gap: 20px;
+  width: min(100%, 360px);
+  margin: 8px 0 10px;
+  text-align: left;
+}
+
+.dev-sign-in .continue-button {
+  width: 100%;
+}
+
+.dev-sign-in .form-error {
+  margin-top: 0;
+}
