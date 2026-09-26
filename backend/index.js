@@ -5,9 +5,9 @@ import cors from 'cors';
 import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'node:url';
 
+const app = express();
 const PORT = process.env.PORT || 5000;
-const db = new sqlite3.Database("my.db");
-
+const db = new sqlite3.Database('my.db');
 const databasePath = fileURLToPath(new URL('./database.sqlite', import.meta.url));
 
 const database = new sqlite3.Database(databasePath, (error) => {
@@ -19,15 +19,21 @@ const database = new sqlite3.Database(databasePath, (error) => {
   console.log(`SQLite connection successful: ${databasePath}`);
 });
 
-  app.use(cors());
-  app.use('/api', express.json({ limit: '16kb' }));
-  app.use(express.json());
+app.use(cors());
+app.use(express.json({ limit: '16kb' }));
 
-  registerProfileRoute(app, db);
+try {
+  const profileModule = await import('./profiles.js');
+  if (typeof profileModule.registerProfileRoute === 'function') {
+    profileModule.registerProfileRoute(app, db);
+  }
+} catch (error) {
+  console.warn('Profile routes unavailable; continuing without them:', error.message);
+}
 
-  app.get('/', (req, res) => {
-    res.send('HelloHacks backend is running');
-  });
+app.get('/', (req, res) => {
+  res.send('HelloHacks backend is running');
+});
 
 app.get('/db-status', (req, res) => {
   database.get('SELECT 1 AS ok', (error, row) => {
