@@ -1,28 +1,7 @@
 import { normalizeAvatar } from './avatar.js'
 
 const PROFILE_SESSION_KEY = 'interbuddies.active-profile'
-const LEGACY_DEV_SESSION_KEY = 'interbuddies.dev-preview'
 const DEFAULT_COLOR = '#2457d6'
-
-export const DEV_PROFILE = {
-  id: 'dev-preview',
-  isDev: true,
-  name: 'Dev',
-  username: 'dev',
-  birthday: '2004-04-15',
-  gender: 'prefer-not-to',
-  avatar: null,
-  nationality: 'CA',
-  university: 'University of British Columbia',
-  residence: 'Totem Park',
-  year: 2,
-  major: 'Computer Science (BSc)',
-  hobbies: ['Photography', 'Cooking', 'Live music'],
-  sports: ['Soccer', 'Badminton', 'Swimming'],
-  languages: ['English', 'French'],
-  favoriteColor: DEFAULT_COLOR,
-  socialMedia: [],
-}
 
 function text(value, maxLength) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : ''
@@ -73,16 +52,9 @@ export function normalizeProfile(profile) {
 export function readActiveProfile() {
   try {
     const stored = sessionStorage.getItem(PROFILE_SESSION_KEY)
-    if (stored !== null) {
-      const profile = JSON.parse(stored)
-      return isProfile(profile) ? normalizeProfile(profile) : null
-    }
-    if (sessionStorage.getItem(LEGACY_DEV_SESSION_KEY) === 'dev') {
-      const profile = normalizeProfile(DEV_PROFILE)
-      saveActiveProfile(profile)
-      return profile
-    }
-    return null
+    if (stored === null) return null
+    const profile = JSON.parse(stored)
+    return isProfile(profile) ? normalizeProfile(profile) : null
   } catch {
     return null
   }
@@ -91,7 +63,6 @@ export function readActiveProfile() {
 export function saveActiveProfile(profile) {
   if (!isProfile(profile)) return false
   try {
-    sessionStorage.removeItem(LEGACY_DEV_SESSION_KEY)
     sessionStorage.setItem(PROFILE_SESSION_KEY, JSON.stringify(normalizeProfile(profile)))
     return true
   } catch {
@@ -100,13 +71,10 @@ export function saveActiveProfile(profile) {
 }
 
 export function clearActiveProfile() {
-  let cleared = true
-  for (const key of [PROFILE_SESSION_KEY, LEGACY_DEV_SESSION_KEY]) {
-    try {
-      sessionStorage.removeItem(key)
-    } catch {
-      cleared = false
-    }
+  try {
+    sessionStorage.removeItem(PROFILE_SESSION_KEY)
+    return true
+  } catch {
+    return false
   }
-  return cleared
 }

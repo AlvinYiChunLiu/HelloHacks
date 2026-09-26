@@ -7,18 +7,29 @@ export default function SignIn({ onSignIn }) {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const titleRef = useRef(null)
 
   useEffect(() => { titleRef.current?.focus() }, [])
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
-    if (username.trim() !== 'dev' || password !== 'dev') {
-      setError('For this preview, use dev as both your username and password.')
+    if (!username.trim() || !password) {
+      setError('Enter your username and password.')
       return
     }
-    setPassword('')
-    onSignIn()
+
+    setLoading(true)
+    setError('')
+
+    try {
+      await onSignIn(username.trim(), password)
+      setPassword('')
+    } catch (loginError) {
+      setError(loginError?.message || 'Unable to sign in. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -26,7 +37,6 @@ export default function SignIn({ onSignIn }) {
       <BuddyMark className="placeholder-mark" />
       <p className="eyebrow">Welcome back</p>
       <h2 ref={titleRef} tabIndex={-1}>Sign in.</h2>
-      <p>For testing, use <strong>dev</strong> for both fields.</p>
       <form className="dev-sign-in" onSubmit={handleSubmit}>
         <div className="form-field">
           <label htmlFor="sign-in-username">Username</label>
@@ -58,9 +68,8 @@ export default function SignIn({ onSignIn }) {
           /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></div>
         </div>
         {error && <p className="form-error" id="sign-in-error" role="alert">{error}</p>}
-        <button className="continue-button" type="submit">Sign in<ArrowIcon /></button>
+        <button className="continue-button" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}<ArrowIcon /></button>
       </form>
-      <button className="demo-entry" type="button" onClick={onSignIn}>Explore with the dev profile <ArrowIcon /></button>
       <a className="sign-in-button" href="#/">Back to start</a>
     </main>
   )

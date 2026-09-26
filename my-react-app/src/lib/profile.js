@@ -77,6 +77,7 @@ export function registrationPayload(profile) {
     major: profile.major,
     hobbies: [...profile.hobbies],
     sports: [...profile.sports],
+    languages: [...profile.languages],
     password: profile.password,
     username,
     year: Number(profile.year),

@@ -39,8 +39,8 @@ function normalizeBackendUser(user) {
     major: user.major || 'Not selected',
     hobbies: parseArray(user.hobbies),
     sports: parseArray(user.sports),
-    languages: [],
-    socialMedia: [],
+    languages: parseArray(user.languages),
+    socialMedia: parseArray(user.socialMedia),
     favoriteColor: '#2563eb',
     bio: 'Profile loaded from the backend.',
   }
@@ -268,6 +268,8 @@ export default function MainPage({ profile, onEdit }) {
   const [feedback, setFeedback] = useState('')
   const [backendUsers, setBackendUsers] = useState([])
   const titleRef = useRef(null)
+  const feedbackTimer = useRef(null)
+  const savedCount = savedIds.length
 
   useEffect(() => {
     fetch('http://localhost:5000/api/users')
@@ -287,6 +289,10 @@ export default function MainPage({ profile, onEdit }) {
   const buddies = useMemo(() => backendUsers.map(normalizeBackendUser), [backendUsers])
   const matches = getBuddyMatches(profile, buddies)
   const filteredBuddies = getFilteredBuddies(profile, appliedFilters, buddies)
+  const choices = activeFilterChoices(appliedFilters)
+  const hasCriteria = choices.length > 0 || query.trim().length > 0
+  const previewCount = filteredBuddies.length
+  const showColumns = view === 'discover' && !hasCriteria
   const filterOptions = {
     nationality: [...countries].sort((a, b) => a.name.localeCompare(b.name, 'en')),
     major: [...new Set([...ubcOptions.majors.map(({ name }) => name), ...buddies.map((buddy) => buddy.major), profile.major])].filter(Boolean).sort((a, b) => a.localeCompare(b, 'en')),

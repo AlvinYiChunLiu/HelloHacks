@@ -4,7 +4,7 @@ import ProfileAvatar from './components/ProfileAvatar'
 import CreateProfile from './pages/CreateProfile'
 import SignIn from './pages/SignIn'
 import MainPage from './pages/MainPage'
-import { clearActiveProfile, DEV_PROFILE, normalizeProfile, readActiveProfile, saveActiveProfile } from './lib/profileSession'
+import { clearActiveProfile, normalizeProfile, readActiveProfile, saveActiveProfile } from './lib/profileSession'
 import { getThemeStyle } from './lib/theme'
 import './App.css'
 import './theme.css'
@@ -78,9 +78,23 @@ export default function App() {
     window.location.hash = '/main'
   }
 
-  function signInAsDev() {
-    const previous = readActiveProfile()
-    completeProfile(previous?.isDev ? previous : DEV_PROFILE)
+  async function handleSignIn(username, password) {
+    const response = await fetch('http://localhost:5000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(payload.error || 'Unable to sign in.')
+    }
+
+    const normalized = normalizeProfile(payload.user)
+    const saved = saveActiveProfile(normalized)
+    setProfile(normalized)
+    setNotice(saved ? '' : 'You were signed in for this visit only.')
+    window.location.hash = '/main'
   }
 
   function signOut() {
@@ -102,7 +116,7 @@ export default function App() {
       {activeRoute === '/' && <Welcome />}
       {activeRoute === '/create-profile' && <CreateProfile key="create" onComplete={completeProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/' }} />}
       {activeRoute === '/edit-profile' && <CreateProfile key="edit" mode="edit" initialProfile={profile} onComplete={updateProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/main' }} />}
-      {activeRoute === '/sign-in' && <SignIn onSignIn={signInAsDev} />}
+      {activeRoute === '/sign-in' && <SignIn onSignIn={handleSignIn} />}
       {activeRoute === '/main' && <MainPage key={profile.id || profile.username} profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} />}
       <footer className="site-footer">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
