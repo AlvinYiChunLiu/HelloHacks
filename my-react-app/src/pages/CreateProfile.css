@@ -309,6 +309,111 @@
   gap: 8px;
   margin-top: 14px;
 }
+.social-media-fields {
+  display: grid;
+  gap: 20px;
+}
+.social-platform-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.social-platform-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 2px 4px 2px 2px;
+}
+.social-platform-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 39px;
+  padding: 8px 10px;
+  border: 1px solid #ccd8ed;
+  border-radius: 8px;
+  background: #f4f7ff;
+  color: #46566e;
+  font-size: 12px;
+  cursor: pointer;
+}
+.social-platform-option > span:first-of-type {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.social-platform-option input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+.social-platform-option:hover, .social-platform-option.is-selected {
+  border-color: var(--primary);
+  background: #eaf1ff;
+  color: #1942ad;
+}
+.social-platform-option:focus-within {
+  outline: 3px solid #477bea;
+  outline-offset: 2px;
+}
+.social-username-list {
+  display: grid;
+  gap: 14px;
+}
+.social-selection-count {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.social-username-field > label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.social-username-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.social-username-input > span {
+  position: absolute;
+  left: 13px;
+  color: var(--muted);
+}
+.social-username-input input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 10px 74px 10px 30px;
+  border: 1px solid #cbd5e5;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+}
+.social-username-input input::placeholder {
+  color: #626c7c;
+}
+.social-username-input button {
+  position: absolute;
+  right: 5px;
+  height: 34px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+.social-username-input button:hover {
+  background: #eaf1ff;
+  color: var(--primary);
+}
 .interest-chip {
   position: relative;
   display: flex;
@@ -549,6 +654,12 @@
   .interest-chip {
     min-height: 38px;
   }
+  .social-platform-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .social-username-input input {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 380px) {
@@ -565,6 +676,7 @@
 .step-list li:nth-child(2) { --step-color: var(--red); --step-tint: var(--red-light); }
 .step-list li:nth-child(3) { --step-color: #855700; --step-tint: var(--yellow-light); }
 .step-list li:nth-child(4) { --step-color: var(--green); --step-tint: var(--green-light); }
+.step-list li:nth-child(5) { --step-color: var(--primary); --step-tint: var(--blue-light); }
 .step-list .step-number {
   border-color: var(--step-color);
   background: var(--step-tint);
@@ -597,4 +709,13 @@
 }
 .summary-check {
   color: var(--green);
+}
+
+.step-list li:nth-child(6) { --step-color: var(--red); --step-tint: var(--red-light); }
+.edit-section-button { padding: 5px 0; border: 0; border-radius: 4px; background: transparent; color: inherit; font-size: inherit; font-weight: inherit; text-align: left; }
+.edit-section-button:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 600px) {
+  .step-list { gap: 8px; }
+  .step-list li { flex: 1; min-width: 0; font-size: 9px; }
+  .edit-section-button { text-align: center; }
 }

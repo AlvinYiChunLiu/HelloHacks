@@ -1,23 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
-import { ArrowIcon, BuddyMark } from './components/Icons'
+import { useEffect, useState } from 'react'
+import { ArrowIcon, BuddyMark, CloseIcon } from './components/Icons'
+import ProfileAvatar from './components/ProfileAvatar'
 import CreateProfile from './pages/CreateProfile'
 import SignIn from './pages/SignIn'
+import MainPage from './pages/MainPage'
+import { clearActiveProfile, DEV_PROFILE, normalizeProfile, readActiveProfile, saveActiveProfile } from './lib/profileSession'
 import './App.css'
-
-const DEV_SESSION_KEY = 'interbuddies.dev-preview'
-const DEV_PROFILE = { name: 'Dev', username: 'dev', isDev: true }
-
-function readDevProfile() {
-  try {
-    return sessionStorage.getItem(DEV_SESSION_KEY) === 'dev' ? DEV_PROFILE : null
-  } catch {
-    return null
-  }
-}
 
 function readRoute() {
   const path = window.location.hash.slice(1) || '/'
-  return ['/create-profile', '/sign-in', '/main'].includes(path) ? path : '/'
+  return ['/create-profile', '/sign-in', '/main', '/edit-profile'].includes(path) ? path : '/'
 }
 
 function Welcome() {
@@ -45,24 +37,12 @@ function Welcome() {
   )
 }
 
-function Placeholder({ route, profile }) {
-  const titleRef = useRef(null)
-  const signingIn = route === '/sign-in'
-  useEffect(() => { titleRef.current?.focus() }, [route])
-  return (
-    <main className="placeholder-page">
-      <BuddyMark className="placeholder-mark" />
-      <p className="eyebrow">{signingIn || profile?.isDev ? 'Welcome back' : profile ? 'Profile created' : 'Your buddy space'}</p>
-      <h2 ref={titleRef} tabIndex={-1}>{signingIn ? 'Sign in is coming next.' : profile ? `You’re all set, ${profile.name}.` : 'Good company is on its way.'}</h2>
-      <p>{signingIn ? 'This is where you’ll sign in to your InterBuddies profile.' : profile && !profile.isDev ? 'Your profile is saved. Your main page will be here soon.' : 'Your InterBuddies main page will be here soon.'}</p>
-      <a className="sign-in-button" href="#/">Back to start</a>
-    </main>
-  )
-}
-
 export default function App() {
   const [route, setRoute] = useState(readRoute)
-  const [createdProfile, setCreatedProfile] = useState(readDevProfile)
+  const [profile, setProfile] = useState(readActiveProfile)
+  const [notice, setNotice] = useState('')
+  const activeRoute = ['/main', '/edit-profile'].includes(route) && !profile ? '/sign-in' : route
+  const isForm = ['/create-profile', '/edit-profile'].includes(activeRoute)
 
   useEffect(() => {
     const handleRoute = () => {
@@ -73,32 +53,47 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleRoute)
   }, [])
 
-  function completeProfile(profile) {
-    try {
-      sessionStorage.removeItem(DEV_SESSION_KEY)
-    } catch { /* The preview can also run with browser storage disabled. */ }
-    setCreatedProfile(profile)
+  function completeProfile(nextProfile) {
+    const normalized = normalizeProfile(nextProfile)
+    const saved = saveActiveProfile(normalized)
+    setProfile(normalized)
+    setNotice(saved ? '' : 'Your profile is available for this visit. Browser storage is unavailable.')
+    window.location.hash = '/main'
+  }
+
+  function updateProfile(changes) {
+    const updated = normalizeProfile({ ...profile, ...changes })
+    const saved = saveActiveProfile(updated)
+    setProfile(updated)
+    setNotice(saved ? 'Profile updated.' : 'Profile updated for this visit. Browser storage is unavailable.')
     window.location.hash = '/main'
   }
 
   function signInAsDev() {
-    try {
-      sessionStorage.setItem(DEV_SESSION_KEY, 'dev')
-    } catch { /* Keep the preview session in React state if storage is unavailable. */ }
-    setCreatedProfile(DEV_PROFILE)
-    window.location.hash = '/main'
+    const previous = readActiveProfile()
+    completeProfile(previous?.isDev ? previous : DEV_PROFILE)
+  }
+
+  function signOut() {
+    clearActiveProfile()
+    setProfile(null)
+    setNotice('')
+    window.location.hash = '/'
   }
 
   return (
-    <div className={`home${route === '/create-profile' ? ' onboarding-shell' : ''}`}>
+    <div className={`home${isForm ? ' onboarding-shell' : activeRoute === '/main' ? ' dashboard-shell' : ''}`}>
       <header className="site-header">
-        <a className="brand" href="#/" aria-label="InterBuddies start page"><BuddyMark className="brand-mark" /><h1>InterBuddies</h1></a>
-        {route === '/create-profile' && <span className="header-note">A little closer to your people.</span>}
+        <a className="brand" href={profile ? '#/main' : '#/'} aria-label="InterBuddies home"><BuddyMark className="brand-mark" /><h1>InterBuddies</h1></a>
+        {isForm && <span className="header-note">{activeRoute === '/edit-profile' ? 'Make it feel like you.' : 'A little closer to your people.'}</span>}
+        {activeRoute === '/main' && <nav className="dashboard-account-nav" aria-label="Your account"><button className="dashboard-account-link" onClick={() => { window.location.hash = '/edit-profile' }} aria-label="Edit your profile"><ProfileAvatar profile={profile} size="small" /><span>{profile.name}</span></button><button className="dashboard-sign-out" onClick={signOut}>Sign out</button></nav>}
       </header>
-      {route === '/' && <Welcome />}
-      {route === '/create-profile' && <CreateProfile onComplete={completeProfile} onExit={() => { window.location.hash = '/' }} />}
-      {route === '/sign-in' && <SignIn onSignIn={signInAsDev} />}
-      {route === '/main' && <Placeholder route={route} profile={createdProfile} />}
+      {notice && activeRoute === '/main' && <div className="profile-update-notice"><span role="status">{notice}</span><button onClick={() => setNotice('')} aria-label="Dismiss notification"><CloseIcon /></button></div>}
+      {activeRoute === '/' && <Welcome />}
+      {activeRoute === '/create-profile' && <CreateProfile key="create" onComplete={completeProfile} onExit={() => { window.location.hash = '/' }} />}
+      {activeRoute === '/edit-profile' && <CreateProfile key="edit" mode="edit" initialProfile={profile} onComplete={updateProfile} onExit={() => { window.location.hash = '/main' }} />}
+      {activeRoute === '/sign-in' && <SignIn onSignIn={signInAsDev} />}
+      {activeRoute === '/main' && <MainPage profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} />}
       <footer className="site-footer">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
         A little hello can go a long way.

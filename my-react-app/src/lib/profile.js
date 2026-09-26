@@ -1,3 +1,5 @@
+import { DEFAULT_PROFILE_COLOR, LANGUAGES, PROFILE_COLORS } from '../data/profileOptions.js'
+
 export const UNIVERSITY = 'University of British Columbia'
 
 export const HOBBIES = [
@@ -29,47 +31,98 @@ export function getAge(birthday, today = new Date()) {
 
 export function emptyProfile() {
   return {
-    name: '', username: '', birthday: '', nationality: '',
+    favoriteColor: '', name: '', username: '', birthday: '', nationality: '', languages: [],
     university: UNIVERSITY, residence: '', year: '', major: '',
-    hobbies: [], sports: [], email: '', password: '',
+    hobbies: [], sports: [], socialMedia: [], password: '',
   }
 }
 
 export function validateStep(step, profile, options, today = new Date()) {
   const errors = {}
-  if (step === 0) {
+  if (step === 0 && !PROFILE_COLORS.some((color) => color.value === profile.favoriteColor)) {
+    errors.favoriteColor = 'Choose your favorite color.'
+  }
+  if (step === 1) {
     if (!profile.name.trim()) errors.name = 'Please enter your name.'
     else if (profile.name.trim().length > 80) errors.name = 'Use 80 characters or fewer.'
     if (!/^[a-zA-Z0-9_]{3,24}$/.test(profile.username.trim())) errors.username = 'Use 3–24 letters, numbers, or underscores.'
     if (getAge(profile.birthday, today) === null) errors.birthday = 'Choose a valid birthday between 1900 and today.'
     if (!options.countries.some((country) => country.code === profile.nationality)) errors.nationality = 'Choose a country from the list.'
+    if (!Array.isArray(profile.languages) || !profile.languages.length || profile.languages.some((language) => !LANGUAGES.includes(language))) errors.languages = 'Choose at least one language from the list.'
   }
-  if (step === 1) {
+  if (step === 2) {
     if (profile.university !== UNIVERSITY) errors.university = 'Choose the University of British Columbia.'
     if (!options.residences.some((residence) => residence.value === profile.residence)) errors.residence = 'Choose your residence or off-campus housing.'
     if (!/^[1-6]$/.test(String(profile.year))) errors.year = 'Choose your year, from 1st to 6th.'
     if (!options.majors.some((major) => major.value === profile.major)) errors.major = 'Choose a major from the list.'
   }
-  if (step === 3) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email.trim()) || profile.email.trim().length > 254) errors.email = 'Enter a valid email address.'
+  if (step === 5) {
     if (profile.password.length < 8 || profile.password.length > 128) errors.password = 'Use a password with 8–128 characters.'
   }
   return errors
 }
 
 export function registrationPayload(profile) {
+  const username = profile.username.trim().toLowerCase()
   return {
-    ...profile,
     name: profile.name.trim(),
-    username: profile.username.trim().toLowerCase(),
+    birthday: profile.birthday,
+    nationality: profile.nationality,
+    university: profile.university,
+    residence: profile.residence,
+    major: profile.major,
+    hobbies: [...profile.hobbies],
+    sports: [...profile.sports],
+    password: profile.password,
+    username,
     year: Number(profile.year),
-    email: profile.email.trim().toLowerCase(),
+    // The current frontend-only registration contract still requires an email.
+    email: `${username}@accounts.interbuddies.invalid`,
+    socialMedia: (profile.socialMedia || []).map(({ platform, username: socialUsername }) => ({ platform, username: socialUsername.trim() })),
   }
 }
 
 export function stepForField(field) {
-  if (['name', 'username', 'birthday', 'nationality'].includes(field)) return 0
-  if (['university', 'residence', 'year', 'major'].includes(field)) return 1
-  if (['hobbies', 'sports'].includes(field)) return 2
-  return 3
+  if (field === 'favoriteColor') return 0
+  if (['name', 'username', 'birthday', 'nationality', 'languages'].includes(field)) return 1
+  if (['university', 'residence', 'year', 'major'].includes(field)) return 2
+  if (['hobbies', 'sports'].includes(field)) return 3
+  if (field === 'socialMedia') return 4
+  return 5
+}
+
+// Build an independent form draft; credentials are never prefilled for editing.
+export function profileDraft(initialProfile = {}) {
+  const draft = emptyProfile()
+  for (const field of ['name', 'username', 'birthday', 'nationality', 'university', 'residence', 'major']) {
+    if (typeof initialProfile[field] === 'string') draft[field] = initialProfile[field]
+  }
+  draft.year = initialProfile.year ? String(initialProfile.year) : ''
+  draft.favoriteColor = PROFILE_COLORS.some((color) => color.value === initialProfile.favoriteColor)
+    ? initialProfile.favoriteColor : DEFAULT_PROFILE_COLOR
+  for (const field of ['languages', 'hobbies', 'sports']) {
+    draft[field] = Array.isArray(initialProfile[field]) ? [...initialProfile[field]] : []
+  }
+  draft.socialMedia = Array.isArray(initialProfile.socialMedia)
+    ? initialProfile.socialMedia.map(({ platform, username }) => ({ platform, username: username || '' })) : []
+  return draft
+}
+
+// These public profile changes are saved locally by the parent screen.
+export function profileChanges(profile) {
+  return {
+    favoriteColor: profile.favoriteColor,
+    name: profile.name.trim(),
+    username: profile.username.trim().toLowerCase(),
+    birthday: profile.birthday,
+    nationality: profile.nationality,
+    languages: [...new Set(profile.languages)],
+    university: profile.university,
+    residence: profile.residence,
+    year: Number(profile.year),
+    major: profile.major,
+    hobbies: [...profile.hobbies],
+    sports: [...profile.sports],
+    socialMedia: profile.socialMedia.map(({ platform, username }) => ({ platform, username: username.trim() })),
+  }
 }
