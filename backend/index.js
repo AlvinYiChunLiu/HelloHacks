@@ -1,34 +1,24 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql2/promise');
+import express from 'express';
+import cors from 'cors';
+import sqlite3 from 'sqlite3';
+import { fileURLToPath } from 'node:url';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const db = new sqlite3.Database("my.db");
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'your_db_user',
-  password: process.env.DB_PASSWORD || 'your_db_password',
-  database: process.env.DB_NAME || 'your_database_name',
-  waitForConnections: true,
-  connectionLimit: 10,
-};
+const databasePath = fileURLToPath(new URL('./database.sqlite', import.meta.url));
 
-const pool = mysql.createPool(dbConfig);
-
-async function testDatabaseConnection() {
-  try {
-    const [rows] = await pool.query('SELECT 1 + 1 AS solution');
-    console.log('MySQL connection successful. Test query result:', rows[0].solution);
-    return true;
-  } catch (error) {
-    console.error('MySQL connection failed:', error.message);
-    return false;
+const database = new sqlite3.Database(databasePath, (error) => {
+  if (error) {
+    console.error('SQLite connection failed:', error.message);
+    return;
   }
-}
+
+  console.log(`SQLite connection successful: ${databasePath}`);
+});
 
 app.use(cors());
 app.use(express.json());
@@ -37,27 +27,27 @@ app.get('/', (req, res) => {
   res.send('HelloHacks backend is running');
 });
 
-app.get('/db-status', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT 1 AS ok');
+app.get('/db-status', (req, res) => {
+  database.get('SELECT 1 AS ok', (error, row) => {
+    if (error) {
+      res.status(500).json({
+        connected: false,
+        database: databasePath,
+        status: 'not_connected',
+        error: error.message,
+      });
+      return;
+    }
+
     res.json({
       connected: true,
-      database: dbConfig.database,
+      database: databasePath,
       status: 'connected',
-      result: rows[0],
+      result: row,
     });
-  } catch (error) {
-    res.status(500).json({
-      connected: false,
-      database: dbConfig.database,
-      status: 'not_connected',
-      error: error.message,
-    });
-  }
+  });
 });
 
-
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  await testDatabaseConnection();
 });
