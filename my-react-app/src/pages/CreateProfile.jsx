@@ -210,7 +210,7 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
     requestRef.current = controller
     const timeout = window.setTimeout(() => controller.abort(), 15000)
     try {
-      const response = await fetch('/api/profiles', {
+      const response = await fetch('http://localhost:5000/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registrationPayload(profile)),
