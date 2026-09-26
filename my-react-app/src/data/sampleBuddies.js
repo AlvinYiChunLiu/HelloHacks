@@ -1,4 +1,5 @@
 import { UNIVERSITY } from '../lib/profile.js'
+import { SOCIAL_PLATFORMS } from './socialPlatforms.js'
 
 // Fictional students for exploring the interface. These are not real accounts.
 const examples = [
@@ -40,6 +41,7 @@ export const SAMPLE_BUDDIES = examples.map(([
   hobbies,
   sports,
   languages,
+  socialMedia: [...new Set([SOCIAL_PLATFORMS[index % SOCIAL_PLATFORMS.length], SOCIAL_PLATFORMS[(index * 3 + 2) % SOCIAL_PLATFORMS.length]])].map((platform) => ({ platform, username: '' })),
   favoriteColor,
   bio,
 }))

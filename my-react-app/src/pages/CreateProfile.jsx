@@ -5,6 +5,7 @@ import ProfileColorPicker from '../components/ProfileColorPicker'
 import LanguagePicker from '../components/LanguagePicker'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
+import { SOCIAL_PLATFORMS } from '../data/socialPlatforms'
 import { emptyProfile, getAge, HOBBIES, profileChanges, profileDraft, registrationPayload, SPORTS, stepForField, todayDate, UNIVERSITY, validateStep } from '../lib/profile'
 import './CreateProfile.css'
 
@@ -15,11 +16,6 @@ const STEPS = [
   { label: 'Your interests', title: 'What makes you, you?', description: 'Pick the things you enjoy. You can choose as many as you like.' },
   { label: 'Social media', title: 'Where can people find you?', description: 'Choose any social platforms you use and add your username for each.' },
   { label: 'Account details', title: 'One last thing.', description: 'Choose a password to finish creating your profile.' },
-]
-const SOCIAL_PLATFORMS = [
-  'YouTube', 'Facebook', 'Instagram', 'WhatsApp', 'TikTok', 'Facebook Messenger',
-  'Snapchat', 'Telegram', 'Pinterest', 'X', 'LinkedIn', 'Reddit', 'WeChat',
-  'Douyin', 'Threads', 'Discord', 'Twitch', 'LINE', 'Weibo', 'KakaoTalk',
 ]
 const searchable = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('en')
 const alphabetical = (a, b) => a.label.localeCompare(b.label, 'en')

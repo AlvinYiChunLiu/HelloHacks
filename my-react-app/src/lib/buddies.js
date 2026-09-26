@@ -9,6 +9,48 @@ function compareMatches(a, b) {
   return b.shared.length - a.shared.length || a.name.localeCompare(b.name)
 }
 
+function platformNames(accounts) {
+  if (!Array.isArray(accounts)) return []
+  return accounts.map((account) => typeof account === 'string' ? account : account?.platform).filter(Boolean)
+}
+
+export function emptyBuddyFilters() {
+  return { nationality: '', major: '', year: '', residence: '', sports: [], hobbies: [], languages: [], socialMedia: [] }
+}
+
+export function getSharedProfileTraits(profile = {}, buddy = {}) {
+  const shared = []
+  if (profile.nationality && profile.nationality === buddy.nationality) shared.push('Same nationality')
+  if (profile.major && profile.major === buddy.major) shared.push('Same major')
+  if (profile.year && String(profile.year) === String(buddy.year)) shared.push('Same year')
+  if (profile.residence && profile.residence === buddy.residence) shared.push('Same residence')
+  for (const sport of sharedInterests(profile.sports, buddy.sports)) shared.push(`Sport: ${sport}`)
+  for (const hobby of sharedInterests(profile.hobbies, buddy.hobbies)) shared.push(`Hobby: ${hobby}`)
+  for (const language of sharedInterests(profile.languages, buddy.languages)) shared.push(`Language: ${language}`)
+  for (const platform of sharedInterests(platformNames(profile.socialMedia), platformNames(buddy.socialMedia))) shared.push(`Platform: ${platform}`)
+  return shared
+}
+
+export function getFilteredBuddies(profile = {}, filters = emptyBuddyFilters(), buddies = SAMPLE_BUDDIES) {
+  const scalarFields = ['nationality', 'major', 'year', 'residence']
+  const multiFields = ['sports', 'hobbies', 'languages']
+  return buddies
+    .filter((buddy) => {
+      if ((profile.id != null && buddy.id === profile.id) ||
+        (profile.username && buddy.username?.toLowerCase() === profile.username.toLowerCase())) return false
+      if (scalarFields.some((field) => filters[field] && String(buddy[field]) !== String(filters[field]))) return false
+      return multiFields.every((field) => {
+        const selected = Array.isArray(filters[field]) ? filters[field] : []
+        return !selected.length || selected.some((value) => (buddy[field] || []).includes(value))
+      }) && (!filters.socialMedia?.length || filters.socialMedia.some((platform) => platformNames(buddy.socialMedia).includes(platform)))
+    })
+    .map((buddy) => {
+      const shared = getSharedProfileTraits(profile, buddy)
+      return { ...buddy, shared, commonCount: shared.length }
+    })
+    .sort((a, b) => b.commonCount - a.commonCount || a.name.localeCompare(b.name))
+}
+
 export function getBuddyMatches(profile = {}, buddies = SAMPLE_BUDDIES) {
   const matches = { nationality: [], sports: [], hobbies: [] }
   const seen = new Set()
