@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowIcon, BuddyMark, CloseIcon, EditIcon } from '../components/Icons'
 import ProfileAvatar from '../components/ProfileAvatar'
 import ProfileSocials from '../components/ProfileSocials'
@@ -8,8 +8,7 @@ import { BookmarkIcon, SearchIcon, FilterIcon, SparkIcon } from '../components/D
 import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, searchBuddies } from '../lib/discovery'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
-import { PROFILE_COLORS } from '../data/profileOptions'
-import { SAMPLE_BUDDIES } from '../data/sampleBuddies'
+import { LANGUAGES, PROFILE_COLORS } from '../data/profileOptions'
 import { emptyBuddyFilters, getBuddyMatches, getFilteredBuddies, getSharedProfileTraits } from '../lib/buddies'
 import { getAge, HOBBIES, SPORTS } from '../lib/profile'
 import CampusMap from '../components/CampusMap'
@@ -17,6 +16,38 @@ import HangoutsBoard, { HangoutCard } from '../components/HangoutsBoard'
 import { readHangouts, saveHangouts, sortHangouts } from '../lib/hangouts'
 import { SAMPLE_HANGOUTS } from '../data/sampleHangouts'
 import './MainPage.css'
+
+function normalizeBackendUser(user) {
+  const parseArray = (value) => {
+    if (Array.isArray(value)) return value
+    if (typeof value !== 'string') return []
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+
+  return {
+    id: user.id,
+    name: user.name || 'Unknown user',
+    username: user.username || `user_${user.id}`,
+    nationality: user.nationality || '',
+    birthday: user.birthday || '2000-01-01',
+    gender: 'prefer-not-to',
+    university: user.university || 'University of British Columbia',
+    residence: user.residence || 'Not selected',
+    year: Number(user.year) || 1,
+    major: user.major || 'Not selected',
+    hobbies: parseArray(user.hobbies),
+    sports: parseArray(user.sports),
+    languages: parseArray(user.languages),
+    socialMedia: parseArray(user.socialMedia),
+    favoriteColor: '#2563eb',
+    bio: 'Profile loaded from the backend.',
+  }
+}
 
 const countryName = (code) => countries.find((country) => country.code === code)?.name || 'Not selected'
 const yearName = (year) => ({ 1: '1st year', 2: '2nd year', 3: '3rd year', 4: '4th year', 5: '5th year', 6: '6th year' })[year] || 'Year not selected'
@@ -286,21 +317,38 @@ export default function MainPage({ profile, onEdit }) {
   const [sort, setSort] = useState('common')
   const [savedIds, setSavedIds] = useState(() => readSavedBuddies(profile))
   const [feedback, setFeedback] = useState('')
+  const [backendUsers, setBackendUsers] = useState([])
   const titleRef = useRef(null)
   const feedbackTimer = useRef(null)
   const hangouts = sortHangouts([...SAMPLE_HANGOUTS, ...userHangouts])
-  const matches = getBuddyMatches(profile)
+  const savedCount = savedIds.length
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/users')
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Unable to load users from the backend.')
+        }
+        return response.json()
+      })
+      .then((users) => setBackendUsers(Array.isArray(users) ? users : []))
+      .catch((error) => {
+        console.error('Failed to load users:', error)
+        setBackendUsers([])
+      })
+  }, [])
+
+  const buddies = useMemo(() => backendUsers.map(normalizeBackendUser), [backendUsers])
+  const matches = getBuddyMatches(profile, buddies)
+  const filteredBuddies = getFilteredBuddies(profile, appliedFilters, buddies)
   const choices = activeFilterChoices(appliedFilters)
-  const ranked = getFilteredBuddies(profile, appliedFilters)
-  const filteredBuddies = searchBuddies(ranked, query, countryNames).filter((buddy) => view !== 'saved' || savedIds.includes(buddy.id))
-  if (sort === 'name') filteredBuddies.sort((a, b) => a.name.localeCompare(b.name))
-  const savedCount = SAMPLE_BUDDIES.filter((buddy) => savedIds.includes(buddy.id)).length
   const hasCriteria = choices.length > 0 || query.trim().length > 0
-  const showColumns = view === 'discover' && !hasCriteria && sort === 'common'
-  const previewCount = searchBuddies(getFilteredBuddies(profile, draftFilters), query, countryNames).filter((buddy) => view !== 'saved' || savedIds.includes(buddy.id)).length
+  const previewCount = filteredBuddies.length
+  const showColumns = view === 'discover' && !hasCriteria
   const filterOptions = {
     nationality: [...countries].sort((a, b) => a.name.localeCompare(b.name, 'en')),
-    major: [...new Set([...ubcOptions.majors.map(({ name }) => name), ...SAMPLE_BUDDIES.map((buddy) => buddy.major), profile.major])].filter(Boolean).sort(),
+    major: [...new Set([...ubcOptions.majors.map(({ name }) => name), ...buddies.map((buddy) => buddy.major), profile.major])].filter(Boolean).sort((a, b) => a.localeCompare(b, 'en')),
+    residence: [...new Set([...ubcOptions.residences.map(({ name }) => name), ...buddies.map((buddy) => buddy.residence), 'Off campus / commuting', profile.residence])].filter(Boolean).sort((a, b) => a.localeCompare(b, 'en')),
   }
 
   useEffect(() => {
