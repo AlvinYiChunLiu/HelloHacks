@@ -1,3 +1,4 @@
+import CopyButton from './CopyButton'
 import './ProfileSocials.css'
 
 export default function ProfileSocials({ accounts = [], compact = false }) {
@@ -12,7 +13,7 @@ export default function ProfileSocials({ accounts = [], compact = false }) {
         {visible.map(({ platform, username }) => (
           <li key={platform}>
             <span className="social-platform-name">{platform}</span>
-            {username?.trim() && <span className="social-platform-handle">@{username.trim().replace(/^@+/, '')}</span>}
+            {username?.trim() && <div className="social-handle-group"><span className="social-platform-handle">@{username.trim().replace(/^@+/, '')}</span>{!compact && <CopyButton text={`@${username.trim().replace(/^@+/, '')}`} label={`Copy ${platform} username`} />}</div>}
           </li>
         ))}
       </ul>

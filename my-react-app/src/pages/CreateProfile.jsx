@@ -3,6 +3,8 @@ import { ArrowIcon } from '../components/Icons'
 import SearchSelect from '../components/SearchSelect'
 import ProfileColorPicker from '../components/ProfileColorPicker'
 import ProfilePicturePicker from '../components/ProfilePicturePicker'
+import ProfileAvatar from '../components/ProfileAvatar'
+import { readRegistrationDraft, saveRegistrationDraft, clearRegistrationDraft } from '../lib/registrationDraft'
 import LanguagePicker from '../components/LanguagePicker'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
@@ -125,11 +127,14 @@ function SocialMediaPicker({ selected, onChange }) {
 export default function CreateProfile({ onComplete, onExit, onColorChange, initialProfile, mode = 'create' }) {
   const isEditing = mode === 'edit'
   const steps = isEditing ? STEPS.slice(0, -1) : STEPS
-  const [profile, setProfile] = useState(() => isEditing ? profileDraft(initialProfile) : emptyProfile())
-  const [step, setStep] = useState(0)
+  const [restoredDraft, setRestoredDraft] = useState(() => isEditing ? null : readRegistrationDraft())
+  const [profile, setProfile] = useState(() => isEditing ? profileDraft(initialProfile) : restoredDraft?.profile || emptyProfile())
+  const [step, setStep] = useState(isEditing ? 1 : restoredDraft?.step || 0)
+  const [furthestStep, setFurthestStep] = useState(restoredDraft?.step || 0)
   const [errors, setErrors] = useState({})
   const [serverError, setServerError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [preparingPhoto, setPreparingPhoto] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const titleRef = useRef(null)
   const formRef = useRef(null)
@@ -151,6 +156,24 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
     requestRef.current = null
   }, [])
 
+  function moveToStep(nextStep) {
+    setStep(nextStep)
+    setFurthestStep((previous) => Math.max(previous, nextStep))
+  }
+
+  useEffect(() => {
+    if (!isEditing && profile.favoriteColor) saveRegistrationDraft(profile, step)
+  }, [isEditing, profile, step])
+
+  function startOver() {
+    clearRegistrationDraft()
+    setProfile(emptyProfile())
+    setStep(0)
+    setFurthestStep(0)
+    setErrors({})
+    setServerError('')
+    setRestoredDraft(null)
+  }
   function update(field, value) {
     setProfile((previous) => ({ ...previous, [field]: value }))
     setErrors((previous) => ({ ...previous, [field]: undefined }))
@@ -172,13 +195,13 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
   function goBack() {
     setErrors({})
     setServerError('')
-    if (step === 0) onExit()
-    else setStep(step - 1)
+    if (isEditing || step === 0) onExit()
+    else moveToStep(step - 1)
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    if (submitting) return
+    if (submitting || preparingPhoto) return
     const nextErrors = validateStep(step, profile, validationOptions)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length) {
@@ -187,14 +210,14 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
     }
     if (!isEditing && step < steps.length - 1) {
       setServerError('')
-      setStep(step + 1)
+      moveToStep(step + 1)
       return
     }
     for (let previousStep = 0; previousStep < steps.length; previousStep += 1) {
       const previousErrors = validateStep(previousStep, profile, validationOptions)
       if (Object.keys(previousErrors).length) {
         setErrors(previousErrors)
-        setStep(previousStep)
+        moveToStep(previousStep)
         return
       }
     }
@@ -220,16 +243,17 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
       if (!response.ok) {
         if (result?.field === 'email') {
           setErrors({ username: 'That username is already in use. Please choose another.' })
-          setStep(1)
+          moveToStep(1)
         } else if (result?.field && Object.hasOwn(profile, result.field)) {
           setErrors({ [result.field]: result.error || 'Please check this field.' })
-          setStep(stepForField(result.field))
+          moveToStep(stepForField(result.field))
         } else {
           setServerError(result?.error || 'We couldn’t create your profile. Please try again.')
         }
         return
       }
       if (!result?.profile?.id) throw new Error('Unexpected registration response')
+      clearRegistrationDraft()
       const changes = profileChanges(profile)
       onComplete({ ...result.profile, favoriteColor: changes.favoriteColor, languages: changes.languages, gender: changes.gender, avatar: changes.avatar, socialMedia: changes.socialMedia })
     } catch {
@@ -251,11 +275,12 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
           {steps.map((item, index) => (
             <li key={item.label} className={index === step ? 'is-current' : index < step ? 'is-complete' : ''} aria-current={index === step ? 'step' : undefined}>
               <span className="step-number" aria-hidden="true">{index < step ? '\u2713' : `0${index + 1}`}</span>
-              {isEditing ? <button type="button" className="edit-section-button" onClick={() => { setStep(index); setErrors({}) }}>{item.label}</button> : <span>{item.label}</span>}
+              {isEditing || index <= furthestStep ? <button type="button" className="edit-section-button" disabled={submitting || preparingPhoto} onClick={() => { moveToStep(index); setErrors({}) }}>{item.label}</button> : <span>{item.label}</span>}
               <span className="sr-only">{index < step ? ' — completed' : index === step ? ' — current step' : ''}</span>
             </li>
           ))}
         </ol>
+        {(profile.name || profile.avatar) && <div className="onboarding-profile-preview"><ProfileAvatar profile={profile} /><div><strong>{profile.name || 'Your profile'}</strong><span>{profile.username ? `@${profile.username}` : 'Make it feel like you.'}</span></div></div>}
         <p className="onboarding-aside-note">A simple hello can be the start of something good.</p>
       </aside>
 
@@ -265,6 +290,7 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
         <h2 id="step-title" ref={titleRef} tabIndex={-1}>{current.title}</h2>
         <p className="step-description">{current.description}</p>
 
+        {restoredDraft && <div className="draft-restored" role="status"><span>Welcome back. Your draft is ready to continue.</span><button type="button" disabled={submitting || preparingPhoto} onClick={startOver}>Start over</button></div>}
         <form ref={formRef} onSubmit={handleSubmit} noValidate>
           {Object.values(errors).some(Boolean) && <p className="sr-only" role="alert">Please check the highlighted fields.</p>}
           <fieldset className="step-fields" disabled={submitting} key={step}>
@@ -281,7 +307,7 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
                 <Field name="birthday" label="Birthday" error={errors.birthday}>
                   <div className="birthday-input"><input {...inputProps('birthday')} type="date" min="1900-01-01" max={todayDate()} autoComplete="bday" /><output className={`age-badge${age === null ? ' is-empty' : ''}`} htmlFor="birthday" aria-live="polite">{age === null ? 'Your age' : `${age} ${age === 1 ? 'year' : 'years'} old`}</output></div>
                 </Field>
-                <ProfilePicturePicker value={profile.avatar} onChange={(value) => update('avatar', value)} profileName={profile.name} color={profile.favoriteColor} />
+                <ProfilePicturePicker value={profile.avatar} onChange={(value) => update('avatar', value)} profileName={profile.name} color={profile.favoriteColor} onPreparingChange={setPreparingPhoto} />
                 <fieldset className="gender-picker" aria-describedby={errors.gender ? 'gender-error' : 'gender-hint'}>
                   <legend>Gender</legend>
                   <div className="gender-options">
@@ -331,6 +357,10 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
             )}
             {step === 6 && (
               <div className="fields-grid">
+                <div className="registration-review">
+                  <div className="review-identity"><ProfileAvatar profile={profile} /><div><strong>{profile.name}</strong><span>@{profile.username}</span></div><button type="button" onClick={() => moveToStep(1)}>Review details</button></div>
+                  <dl><div><dt>From</dt><dd>{countries.find((country) => country.code === profile.nationality)?.name}</dd></div><div><dt>Languages</dt><dd>{profile.languages.join(', ')}</dd></div><div><dt>Studies</dt><dd>{profile.major} &middot; Year {profile.year}</dd></div><div><dt>Interests</dt><dd>{[...profile.hobbies, ...profile.sports].join(', ') || 'You can add these later'}</dd></div></dl>
+                </div>
                 <Field name="password" label="Password" error={errors.password} hint="Choose a password with at least 8 characters.">
                   <div className="password-input"><input {...inputProps('password', true)} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={128} placeholder="Create a password" /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? 'Hide' : 'Show'}</button></div>
                 </Field>
@@ -340,20 +370,20 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
           </fieldset>
           {serverError && <p className="form-error" role="alert">{serverError}</p>}
           <div className="onboarding-actions">
-            <button type="button" className="back-button" onClick={goBack} disabled={submitting}><span aria-hidden="true">&#8592;</span> {isEditing && step === 0 ? 'Cancel' : 'Back'}</button>
-            <button type="submit" className="continue-button" disabled={submitting}>{submitting ? 'Creating profile…' : isEditing ? 'Save changes' : step === steps.length - 1 ? 'Create profile' : 'Continue'}{!submitting && <ArrowIcon />}</button>
+            <button type="button" className="back-button" onClick={goBack} disabled={submitting || preparingPhoto}><span aria-hidden="true">&#8592;</span> {isEditing ? 'Cancel' : 'Back'}</button>
+            <button type="submit" className="continue-button" disabled={submitting || preparingPhoto}>{submitting ? 'Creating profile…' : isEditing ? 'Save changes' : step === steps.length - 1 ? 'Create profile' : 'Continue'}{!submitting && <ArrowIcon />}</button>
           </div>
           {!isEditing && step === 4 && <button type="button" className="skip-button" onClick={() => {
             setProfile((previous) => ({ ...previous, hobbies: [], sports: [] }))
             setErrors({})
             setServerError('')
-            setStep(5)
+            moveToStep(5)
           }}>Skip for now</button>}
           {!isEditing && step === 5 && <button type="button" className="skip-button" onClick={() => {
             update('socialMedia', [])
             setErrors({})
             setServerError('')
-            setStep(6)
+            moveToStep(6)
           }}>Skip for now</button>}
         </form>
       </section>

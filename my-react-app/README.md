@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 
-Open the URL printed by Vite. Choose **Sign in** and use username `dev` and password `dev` to explore the dashboard and edit a sample profile. This preview works without the backend.
+Open the URL printed by Vite. Choose **Sign in** and use username `dev` and password `dev` to explore the dashboard and edit a sample profile. You can also use **Explore with the dev profile** on the sign-in page. This preview works without the backend.
 
 Actual registration still requires the existing backend, which you can start in another terminal from the repository root:
 
@@ -38,7 +38,16 @@ About you supports a local photo or one of five smiley expressions. Photos are r
 
 Registration retains the existing `POST /api/profiles` integration and generated account-email convention. Favorite color, languages, gender, and avatar are retained by the frontend without adding fields to the existing registration API payload. The existing social-media payload is preserved. The backend is unchanged.
 
-Active profiles and edits are stored in `sessionStorage` for the current browser tab. Reloading retains the active profile; signing out clears it. Profile edits do not update backend records or account credentials. Passwords are never stored in browser storage. Unsubmitted form answers stay in memory and reset when leaving or reloading the form.
+Active profiles and edits are stored in `sessionStorage` for the current browser tab. Reloading retains the active profile; signing out clears it. Profile edits do not update backend records or account credentials. Passwords are never stored in browser storage. Signup drafts also persist in this tab, excluding the password. Reloading or returning to signup restores the answers and current step; successful registration or Start over clears the draft. Edit mode starts on About you and offers Save changes or Cancel from every section.
+
+## Discovery features
+
+- **For you** keeps the three matching columns. **Everyone** browses all profiles; **Saved** collects bookmarked people.
+- Search across names, usernames, countries, majors, residences, interests, languages, and social handles. Searches ignore case and accents and support multiple words.
+- Quick choices for a shared residence, major, or language; full filters with a live result count; removable filter chips; sorting by shared details or name.
+- Bookmarks stay in the current browser tab, scoped to the profile ID. They survive reloads, editing, and signing back into the same profile during that tab session.
+- Profile previews show all interests, shared details, and copyable social handles. Conversation starters are generated locally from shared interests and can be copied; nothing is sent to another person.
+- Larger mobile controls, keyboard focus styles, a skip-to-content link, reduced-motion support, and a profile review before completing signup.
 
 ## Where to make changes
 
@@ -52,6 +61,9 @@ Active profiles and edits are stored in `sessionStorage` for the current browser
 - `src/lib/profile.js`: Age calculation, validation, and form helpers.
 - `src/lib/profileSession.js`: Public profile session storage and the dev profile.
 - `src/lib/buddies.js`: Nationality and interest matching.
+- `src/lib/discovery.js`: Search, filter chips, bookmarks, and conversation starters.
+- `src/lib/registrationDraft.js`: Signup recovery without credentials.
+- `src/enhancements.css`: Dashboard, responsive controls, profile previews, and onboarding refinements.
 - `src/data/sampleBuddies.js`: 21 fictional UBC Vancouver profiles.
 - `src/data/profileOptions.js`: The 30 profile colors and language choices.
 - `src/data/`: Bundled country, UBC residence, and program lists with source notes.

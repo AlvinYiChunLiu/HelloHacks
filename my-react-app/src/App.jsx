@@ -8,6 +8,7 @@ import { clearActiveProfile, DEV_PROFILE, normalizeProfile, readActiveProfile, s
 import { getThemeStyle } from './lib/theme'
 import './App.css'
 import './theme.css'
+import './enhancements.css'
 
 function readRoute() {
   const path = window.location.hash.slice(1) || '/'
@@ -91,6 +92,7 @@ export default function App() {
 
   return (
     <div className={`home${isForm ? ' onboarding-shell' : activeRoute === '/main' ? ' dashboard-shell' : ''}${isPersonalTheme ? ` personal-theme${themeColor ? '' : ' theme-unselected'}` : ''}`} style={isPersonalTheme ? getThemeStyle(themeColor) : undefined}>
+      <a className="skip-navigation" href="#main-content" onClick={(event) => { event.preventDefault(); const main = document.querySelector('main'); main?.setAttribute('tabindex', '-1'); main?.focus() }}>Skip to content</a>
       <header className="site-header">
         <a className="brand" href={profile ? '#/main' : '#/'} aria-label="InterBuddies home"><BuddyMark className="brand-mark" /><h1>InterBuddies</h1></a>
         {isForm && <span className="header-note">{activeRoute === '/edit-profile' ? 'Make it feel like you.' : 'A little closer to your people.'}</span>}
@@ -101,7 +103,7 @@ export default function App() {
       {activeRoute === '/create-profile' && <CreateProfile key="create" onComplete={completeProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/' }} />}
       {activeRoute === '/edit-profile' && <CreateProfile key="edit" mode="edit" initialProfile={profile} onComplete={updateProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/main' }} />}
       {activeRoute === '/sign-in' && <SignIn onSignIn={signInAsDev} />}
-      {activeRoute === '/main' && <MainPage profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} />}
+      {activeRoute === '/main' && <MainPage key={profile.id || profile.username} profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} />}
       <footer className="site-footer">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
         A little hello can go a long way.
