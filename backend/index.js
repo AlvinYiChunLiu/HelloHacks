@@ -1,33 +1,51 @@
-require('dotenv').config();
+try {
+  require('dotenv').config();
+} catch (error) {
+  // dotenv is optional; the app still works without a .env file
+}
 
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'database.sqlite');
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'your_db_user',
-  password: process.env.DB_PASSWORD || 'your_db_password',
-  database: process.env.DB_NAME || 'your_database_name',
-  waitForConnections: true,
-  connectionLimit: 10,
-};
-
-const pool = mysql.createPool(dbConfig);
-
-async function testDatabaseConnection() {
-  try {
-    const [rows] = await pool.query('SELECT 1 + 1 AS solution');
-    console.log('MySQL connection successful. Test query result:', rows[0].solution);
-    return true;
-  } catch (error) {
-    console.error('MySQL connection failed:', error.message);
-    return false;
+const db = new sqlite3.Database(DB_PATH, (err) => {
+  if (err) {
+    console.error('SQLite connection failed:', err.message);
+  } else {
+    console.log(`Connected to SQLite database: ${DB_PATH}`);
   }
+});
+
+function initializeDatabase() {
+  db.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'", (err, row) => {
+    if (err) {
+      console.error('Error checking for users table:', err.message);
+      return;
+    }
+
+    if (!row) {
+      console.log('The users table does not exist yet. Create it in SQLite before using this API.');
+      return;
+    }
+
+    console.log('Connected to existing users table.');
+  });
+}
+
+function getTableColumns(tableName, callback) {
+  db.all(`PRAGMA table_info(${tableName})`, (err, rows) => {
+    if (err) {
+      return callback(err);
+    }
+
+    const columns = rows.map((row) => row.name);
+    callback(null, columns);
+  });
 }
 
 app.use(cors());
@@ -37,26 +55,74 @@ app.get('/', (req, res) => {
   res.send('HelloHacks backend is running');
 });
 
-app.get('/db-status', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT 1 AS ok');
+app.get('/db-status', (req, res) => {
+  db.get('SELECT 1 AS ok', (err, row) => {
+    if (err) {
+      return res.status(500).json({
+        connected: false,
+        status: 'not_connected',
+        error: err.message,
+      });
+    }
+
     res.json({
       connected: true,
-      database: dbConfig.database,
+      database: DB_PATH,
       status: 'connected',
-      result: rows[0],
+      result: row,
     });
-  } catch (error) {
-    res.status(500).json({
-      connected: false,
-      database: dbConfig.database,
-      status: 'not_connected',
-      error: error.message,
-    });
-  }
+  });
 });
 
-app.listen(PORT, async () => {
+app.get('/users', (req, res) => {
+  db.all('SELECT * FROM users ORDER BY id DESC', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+app.post('/users', (req, res) => {
+  const payload = req.body || {};
+
+  if (!Object.keys(payload).length) {
+    return res.status(400).json({ error: 'Request body is required.' });
+  }
+
+  getTableColumns('users', (err, columns) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    const allowedKeys = columns.filter((column) => column !== 'id');
+    const insertFields = Object.keys(payload).filter((key) => allowedKeys.includes(key));
+
+    if (!insertFields.length) {
+      return res.status(400).json({
+        error: `No valid fields found for users table. Available columns: ${allowedKeys.join(', ') || 'none'}`,
+      });
+    }
+
+    const placeholders = insertFields.map(() => '?').join(', ');
+    const values = insertFields.map((key) => payload[key]);
+
+    db.run(
+      `INSERT INTO users (${insertFields.join(', ')}) VALUES (${placeholders})`,
+      values,
+      function (err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+
+        const createdUser = { id: this.lastID, ...payload };
+        res.status(201).json(createdUser);
+      }
+    );
+  });
+});
+
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  await testDatabaseConnection();
+  initializeDatabase();
 });
