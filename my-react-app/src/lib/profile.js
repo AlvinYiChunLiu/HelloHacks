@@ -31,7 +31,7 @@ export function emptyProfile() {
   return {
     name: '', username: '', birthday: '', nationality: '',
     university: UNIVERSITY, residence: '', year: '', major: '',
-    hobbies: [], sports: [], email: '', password: '',
+    hobbies: [], sports: [], socialMedia: [], password: '',
   }
 }
 
@@ -50,20 +50,22 @@ export function validateStep(step, profile, options, today = new Date()) {
     if (!/^[1-6]$/.test(String(profile.year))) errors.year = 'Choose your year, from 1st to 6th.'
     if (!options.majors.some((major) => major.value === profile.major)) errors.major = 'Choose a major from the list.'
   }
-  if (step === 3) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email.trim()) || profile.email.trim().length > 254) errors.email = 'Enter a valid email address.'
+  if (step === 4) {
     if (profile.password.length < 8 || profile.password.length > 128) errors.password = 'Use a password with 8–128 characters.'
   }
   return errors
 }
 
 export function registrationPayload(profile) {
+  const username = profile.username.trim().toLowerCase()
   return {
     ...profile,
     name: profile.name.trim(),
-    username: profile.username.trim().toLowerCase(),
+    username,
     year: Number(profile.year),
-    email: profile.email.trim().toLowerCase(),
+    // The current frontend-only registration contract still requires an email.
+    email: `${username}@accounts.interbuddies.invalid`,
+    socialMedia: (profile.socialMedia || []).map(({ platform, username: socialUsername }) => ({ platform, username: socialUsername.trim() })),
   }
 }
 
@@ -71,5 +73,6 @@ export function stepForField(field) {
   if (['name', 'username', 'birthday', 'nationality'].includes(field)) return 0
   if (['university', 'residence', 'year', 'major'].includes(field)) return 1
   if (['hobbies', 'sports'].includes(field)) return 2
-  return 3
+  if (field === 'socialMedia') return 3
+  return 4
 }

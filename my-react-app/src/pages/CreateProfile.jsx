@@ -10,8 +10,15 @@ const STEPS = [
   { label: 'About you', title: 'First, a little about you.', description: 'Every friendship starts with an introduction.' },
   { label: 'Campus life', title: 'Find your common ground.', description: 'Let’s start with where you study and call home.' },
   { label: 'Your interests', title: 'What makes you, you?', description: 'Pick the things you enjoy. You can choose as many as you like.' },
-  { label: 'Account details', title: 'One last thing.', description: 'Add your email and choose a password to create your profile.' },
+  { label: 'Social media', title: 'Where can people find you?', description: 'Choose any social platforms you use and add your username for each.' },
+  { label: 'Account details', title: 'One last thing.', description: 'Choose a password to finish creating your profile.' },
 ]
+const SOCIAL_PLATFORMS = [
+  'YouTube', 'Facebook', 'Instagram', 'WhatsApp', 'TikTok', 'Facebook Messenger',
+  'Snapchat', 'Telegram', 'Pinterest', 'X', 'LinkedIn', 'Reddit', 'WeChat',
+  'Douyin', 'Threads', 'Discord', 'Twitch', 'LINE', 'Weibo', 'KakaoTalk',
+]
+const searchable = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('en')
 const alphabetical = (a, b) => a.label.localeCompare(b.label, 'en')
 const countryOptions = countries.map(({ code, name }) => ({ value: code, label: name })).sort(alphabetical)
 const residenceOptions = [
@@ -53,6 +60,64 @@ function InterestGroup({ title, description, options, selected, onChange }) {
         ))}
       </div>
     </fieldset>
+  )
+}
+
+function SocialMediaPicker({ selected, onChange }) {
+  const [query, setQuery] = useState('')
+  const matches = SOCIAL_PLATFORMS.filter((platform) => searchable(platform).includes(searchable(query.trim())))
+
+  function toggle(platform) {
+    onChange(selected.some((item) => item.platform === platform)
+      ? selected.filter((item) => item.platform !== platform)
+      : [...selected, { platform, username: '' }])
+  }
+
+  function updateUsername(platform, username) {
+    onChange(selected.map((item) => item.platform === platform ? { ...item, username } : item))
+  }
+
+  return (
+    <div className="social-media-fields">
+      <div className="form-field">
+        <label htmlFor="social-search">Social media</label>
+        <p className="field-hint">Search and select all the platforms you’d like to share.</p>
+        <input id="social-search" type="search" autoComplete="off" placeholder="Search social media…" value={query} onChange={(event) => setQuery(event.target.value)} />
+      </div>
+      <fieldset className="social-platform-picker">
+        <legend className="sr-only">Choose social media platforms</legend>
+        <div className="social-platform-options">
+          {matches.map((platform) => {
+            const checked = selected.some((item) => item.platform === platform)
+            return (
+              <label className={`social-platform-option${checked ? ' is-selected' : ''}`} key={platform}>
+                <input type="checkbox" checked={checked} onChange={() => toggle(platform)} />
+                <span>{platform}</span><span aria-hidden="true">{checked ? '✓' : '+'}</span>
+              </label>
+            )
+          })}
+          {!matches.length && <p className="select-empty" role="status">No matches. Try another search.</p>}
+        </div>
+      </fieldset>
+      {selected.length > 0 && (
+        <div className="social-username-list" aria-label="Usernames for selected social media">
+          <p className="social-selection-count">Add your usernames</p>
+          {selected.map(({ platform, username }) => {
+            const id = `social-${SOCIAL_PLATFORMS.indexOf(platform)}`
+            return (
+              <div className="social-username-field" key={platform}>
+                <label htmlFor={id}>{platform}</label>
+                <div className="social-username-input">
+                  <span aria-hidden="true">@</span>
+                  <input id={id} name={id} autoCapitalize="none" autoComplete="off" spellCheck={false} maxLength={100} placeholder="your_username" value={username} onChange={(event) => updateUsername(platform, event.target.value)} />
+                  <button type="button" onClick={() => toggle(platform)} aria-label={`Remove ${platform}`}>Remove</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -113,12 +178,12 @@ export default function CreateProfile({ onComplete, onExit }) {
       formRef.current?.elements.namedItem(Object.keys(nextErrors)[0])?.focus()
       return
     }
-    if (step < 3) {
+    if (step < 4) {
       setServerError('')
       setStep(step + 1)
       return
     }
-    for (let previousStep = 0; previousStep < 3; previousStep += 1) {
+    for (let previousStep = 0; previousStep < 4; previousStep += 1) {
       const previousErrors = validateStep(previousStep, profile, validationOptions)
       if (Object.keys(previousErrors).length) {
         setErrors(previousErrors)
@@ -141,7 +206,10 @@ export default function CreateProfile({ onComplete, onExit }) {
       })
       const result = await response.json().catch(() => null)
       if (!response.ok) {
-        if (result?.field && Object.hasOwn(profile, result.field)) {
+        if (result?.field === 'email') {
+          setErrors({ username: 'That username is already in use. Please choose another.' })
+          setStep(0)
+        } else if (result?.field && Object.hasOwn(profile, result.field)) {
           setErrors({ [result.field]: result.error || 'Please check this field.' })
           setStep(stepForField(result.field))
         } else {
@@ -150,7 +218,7 @@ export default function CreateProfile({ onComplete, onExit }) {
         return
       }
       if (!result?.profile?.id) throw new Error('Unexpected registration response')
-      onComplete(result.profile)
+      onComplete({ ...result.profile, socialMedia: profile.socialMedia })
     } catch {
       if (requestRef.current === controller) setServerError('We couldn’t connect. Please try again in a moment.')
     } finally {
@@ -179,8 +247,8 @@ export default function CreateProfile({ onComplete, onExit }) {
       </aside>
 
       <section className="onboarding-card" aria-labelledby="step-title">
-        <div className="step-caption"><span>Step {step + 1} of 4</span><span>{step === 2 ? 'Optional' : 'Create your profile'}</span></div>
-        <div className="step-progress" role="progressbar" aria-label="Profile creation" aria-valuemin={0} aria-valuemax={4} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of 4: ${current.label}`}><span style={{ width: `${(step + 1) * 25}%` }} /></div>
+        <div className="step-caption"><span>Step {step + 1} of 5</span><span>{step === 2 || step === 3 ? 'Optional' : 'Create your profile'}</span></div>
+        <div className="step-progress" role="progressbar" aria-label="Profile creation" aria-valuemin={0} aria-valuemax={5} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of 5: ${current.label}`}><span style={{ width: `${(step + 1) * 20}%` }} /></div>
         <h2 id="step-title" ref={titleRef} tabIndex={-1}>{current.title}</h2>
         <p className="step-description">{current.description}</p>
 
@@ -227,10 +295,10 @@ export default function CreateProfile({ onComplete, onExit }) {
               </div>
             )}
             {step === 3 && (
+              <SocialMediaPicker selected={profile.socialMedia} onChange={(value) => update('socialMedia', value)} />
+            )}
+            {step === 4 && (
               <div className="fields-grid">
-                <Field name="email" label="Email address" error={errors.email}>
-                  <input {...inputProps('email')} type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} maxLength={254} placeholder="you@example.com" />
-                </Field>
                 <Field name="password" label="Password" error={errors.password} hint="Choose a password with at least 8 characters.">
                   <div className="password-input"><input {...inputProps('password', true)} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={128} placeholder="Create a password" /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? 'Hide' : 'Show'}</button></div>
                 </Field>
@@ -241,13 +309,19 @@ export default function CreateProfile({ onComplete, onExit }) {
           {serverError && <p className="form-error" role="alert">{serverError}</p>}
           <div className="onboarding-actions">
             <button type="button" className="back-button" onClick={goBack} disabled={submitting}><span aria-hidden="true">&#8592;</span> Back</button>
-            <button type="submit" className="continue-button" disabled={submitting}>{submitting ? 'Creating profile…' : step === 3 ? 'Create profile' : 'Continue'}{!submitting && <ArrowIcon />}</button>
+            <button type="submit" className="continue-button" disabled={submitting}>{submitting ? 'Creating profile…' : step === 4 ? 'Create profile' : 'Continue'}{!submitting && <ArrowIcon />}</button>
           </div>
           {step === 2 && <button type="button" className="skip-button" onClick={() => {
             setProfile((previous) => ({ ...previous, hobbies: [], sports: [] }))
             setErrors({})
             setServerError('')
             setStep(3)
+          }}>Skip for now</button>}
+          {step === 3 && <button type="button" className="skip-button" onClick={() => {
+            update('socialMedia', [])
+            setErrors({})
+            setServerError('')
+            setStep(4)
           }}>Skip for now</button>}
         </form>
       </section>
