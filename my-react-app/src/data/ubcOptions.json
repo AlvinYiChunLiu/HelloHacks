@@ -1,0 +1,822 @@
+{
+  "residences": [
+    {
+      "name": "Acadia Park",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Brock Commons",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Exchange",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Fairview Crescent",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Fraser Hall",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Green College",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Iona House",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Marine Drive",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Orchard Commons",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Place Vanier",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Ponderosa Commons",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Ritsumeikan-UBC House",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "St. John's College",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "tə šxʷhəleləm̓s tə k̓ʷaƛ̓kʷəʔaʔɬ",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Thunderbird",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Totem Park",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Walter Gage",
+      "campus": "Vancouver"
+    }
+  ],
+  "majors": [
+    {
+      "name": "Accounting (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Acting",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Ancient Mediterranean and Near Eastern Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Anthropology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Applied Animal Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Applied Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Applied Plant and Soil Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Art History",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Asian Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Astronomy",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Atmospheric Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Behavioural Neuroscience",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biochemistry",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biochemistry and Chemistry",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biochemistry and Forensic Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biomedical Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biophysics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Biotechnology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Business and Computer Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Business and Markets (Food and Resource Economics)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Business Technology Management (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Canadian Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cell and Developmental Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cellular and Physiological Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Chemical and Biological Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Chemical Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Chemical Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Chemical Physics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Chemistry",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Chemistry and Mathematics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cinema Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Civil Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cognitive Systems (BA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cognitive Systems (BSc)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cognitive Systems: Cognition and Brain (BSc)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cognitive Systems: Computational Intelligence and Design (BSc)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Cognitive Systems: Mind, Language, and Computation (BA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Combined Major in Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Commerce",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Composition (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science (BA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science (BCS)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science (BSc)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Chemistry",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Mathematics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Microbiology and Immunology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Neuroscience",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Physics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Computer Science and Statistics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Conservation",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Conservation Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Creative Writing",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Data Analytics (Food and Resource Economics)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Data Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Dental Hygiene",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Dental Medicine",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Design in Architecture, Landscape Architecture, and Urbanism",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Dietetics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Earth and Ocean Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Economics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Electrical Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Engineering Physics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "English Language",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "English Language and Literature",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "English Literature",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Entrepreneurship (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Environment and Sustainability",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Environmental Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Environmental Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Evolutionary Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Film Production",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Finance (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "First Nations and Endangered Languages",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "First Nations and Indigenous Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Fisheries Oceanography",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Food and Environment",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Food and Nutritional Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Food and Resource Economics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Food Market Analysis",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Food Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Food, Nutrition, and Health",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Forest Bioeconomy Sciences and Technology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Forest Management",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Forest Operations",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Forest Resources Management",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Forest Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "French Language, Literatures and Cultures",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Gender, Race, Sexuality and Social Justice",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "General Business Management (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "General Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "General Studies (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Geographical Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Geological Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Geology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Geophysics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "German Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Global Medieval and Early Modern Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Global Resource Systems",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Global Supply Chain and Logistics Management (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Guitar (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Harpsichord (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Health, Outdoor and Physical Education (Kinesiology)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "History",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Human Geography",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Indigenous Land Stewardship",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Indigenous Teacher Education Program",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Integrated Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Integrated Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Interdisciplinary Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "International Economics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "International Relations",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Kinesiology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Latin American Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Law",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Linguistics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Manufacturing Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Marketing (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Materials Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mathematical Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mathematics (BA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mathematics (BSc)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mathematics and Economics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mathematics and Education",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mechanical Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Media Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Medical Laboratory Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Medicine",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Microbiology and Immunology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Microbiology and Oceanography",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Midwifery",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Mining Engineering",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Modern European Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Music (BA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Music (BMus)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Music Scholarship",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Music: General Studies (Elementary Education)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Music: General Studies (Secondary Education)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Natural Resources and Education",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Natural Resources Conservation",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Neuroscience",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Nursing",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Nutritional Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Oceanography",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Oceanography and Biology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Oceanography and Chemistry",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Oceanography and Physics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Opera (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Operations and Logistics (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Orchestral Instrument (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Organ (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Organizational Behaviour and Human Resources (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Pharmaceutical Sciences",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Pharmacology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Pharmacy",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Philosophy",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Physics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Physics and Astronomy",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Physics and Mathematics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Piano (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Political Science",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Psychology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Real Estate (BBRE)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Real Estate (Commerce)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Romance Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Social Work",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Sociology",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Spanish",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Statistics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Statistics and Economics",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Study of Religion",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Sustainable Agriculture and Environment",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Teacher Education (Elementary)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Teacher Education (Middle Years)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Teacher Education (Secondary)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Theatre",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Theatre Design and Production",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "United States Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Urban Forestry",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Urban Studies",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Visual Art (BA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Visual Art (BFA)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Voice (Music)",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Wood Products",
+      "campus": "Vancouver"
+    },
+    {
+      "name": "Wood Products Processing",
+      "campus": "Vancouver"
+    }
+  ]
+}
