@@ -5,8 +5,7 @@ export function searchBuddies(buddies, query, countryNames = {}) {
   return buddies.filter((buddy) => {
     const text = fold([
       buddy.name, buddy.username, buddy.major, buddy.residence, buddy.nationality,
-      countryNames[buddy.nationality], ...(buddy.languages || []), ...(buddy.sports || []),
-      ...(buddy.hobbies || []), ...(buddy.socialMedia || []).map(({ platform, username }) => `${platform} ${username || ''}`),
+        countryNames[buddy.nationality], ...(buddy.sports || []), ...(buddy.hobbies || []),
     ].join(' '))
     return terms.every((term) => text.includes(term))
   })

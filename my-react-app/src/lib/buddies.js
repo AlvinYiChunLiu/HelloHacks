@@ -15,7 +15,7 @@ function platformNames(accounts) {
 }
 
 export function emptyBuddyFilters() {
-  return { nationality: '', major: '', year: '', residence: '', sports: [], hobbies: [], languages: [], socialMedia: [] }
+  return { nationality: '', major: '', year: '', sports: [], hobbies: [] }
 }
 
 export function getSharedProfileTraits(profile = {}, buddy = {}) {
@@ -32,8 +32,8 @@ export function getSharedProfileTraits(profile = {}, buddy = {}) {
 }
 
 export function getFilteredBuddies(profile = {}, filters = emptyBuddyFilters(), buddies = SAMPLE_BUDDIES) {
-  const scalarFields = ['nationality', 'major', 'year', 'residence']
-  const multiFields = ['sports', 'hobbies', 'languages']
+  const scalarFields = ['nationality', 'major', 'year']
+  const multiFields = ['sports', 'hobbies']
   return buddies
     .filter((buddy) => {
       if ((profile.id != null && buddy.id === profile.id) ||
@@ -42,7 +42,7 @@ export function getFilteredBuddies(profile = {}, filters = emptyBuddyFilters(), 
       return multiFields.every((field) => {
         const selected = Array.isArray(filters[field]) ? filters[field] : []
         return !selected.length || selected.some((value) => (buddy[field] || []).includes(value))
-      }) && (!filters.socialMedia?.length || filters.socialMedia.some((platform) => platformNames(buddy.socialMedia).includes(platform)))
+      })
     })
     .map((buddy) => {
       const shared = getSharedProfileTraits(profile, buddy)

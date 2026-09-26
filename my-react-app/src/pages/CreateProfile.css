@@ -762,6 +762,12 @@
   margin: 0;
   accent-color: var(--primary);
 }
+.step-fields { animation: onboardingStepEnter 260ms cubic-bezier(.2,.75,.25,1) both; }
+@keyframes onboardingStepEnter { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+.age-entry { position: relative; }
+.age-entry input { padding-right: 80px; }
+.age-entry > span { position: absolute; top: 50%; right: 13px; color: #7c899b; font-size: 11px; pointer-events: none; transform: translateY(-50%); }
+@media (prefers-reduced-motion: reduce) { .step-fields { animation: none; } }
 @media (max-width: 800px) {
   .step-list { flex-wrap: wrap; justify-content: flex-start; }
   .step-list li { flex: 1 0 70px; }

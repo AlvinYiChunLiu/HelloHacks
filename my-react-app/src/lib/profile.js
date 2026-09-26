@@ -47,7 +47,8 @@ export function validateStep(step, profile, options, today = new Date()) {
     if (!profile.name.trim()) errors.name = 'Please enter your name.'
     else if (profile.name.trim().length > 80) errors.name = 'Use 80 characters or fewer.'
     if (!/^[a-zA-Z0-9_]{3,24}$/.test(profile.username.trim())) errors.username = 'Use 3–24 letters, numbers, or underscores.'
-    if (getAge(profile.birthday, today) === null) errors.birthday = 'Choose a valid birthday between 1900 and today.'
+    const age = getAge(profile.birthday, today)
+    if (age === null || age < 16 || age > 100) errors.birthday = 'Enter an age between 16 and 100.'
     if (!['male', 'female', 'prefer-not-to'].includes(profile.gender)) errors.gender = 'Choose a gender option, or prefer not to say.'
   }
   if (step === 2) {

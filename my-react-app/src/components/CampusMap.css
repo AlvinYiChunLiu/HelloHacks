@@ -1,0 +1,19 @@
+.campus-map-canvas { width: 100%; height: clamp(430px, 64svh, 720px); min-height: 360px; border-radius: 17px; background: #e6edf0; z-index: 0; }
+.campus-map-canvas .leaflet-container { color: #24314a; font: inherit; }
+.hangout-map-icon { border: 0; background: transparent; }
+.hangout-map-icon > span { position: relative; display: block; width: 31px; height: 31px; border: 3px solid #fff; border-radius: 50% 50% 50% 0; background: #2457d6; box-shadow: 0 3px 10px #1c34534a; transform: rotate(-45deg); transition: transform 160ms, background 160ms; }
+.hangout-map-icon:hover > span { background: #173fba; transform: rotate(-45deg) scale(1.12); }
+.hangout-map-icon > span::after { position: absolute; top: 7px; left: 7px; width: 9px; height: 9px; border-radius: 50%; background: #fff; content: ''; }
+.hangout-leaflet-popup .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border: 1px solid #e4eaf1; border-radius: 15px; box-shadow: 0 12px 35px #21364c2c; }
+.hangout-leaflet-popup .leaflet-popup-content { width: 248px !important; margin: 0; }
+.hangout-leaflet-popup .leaflet-popup-tip { box-shadow: 0 4px 8px #21364c1c; }
+.hangout-leaflet-popup .leaflet-popup-close-button { z-index: 1; top: 10px !important; right: 10px !important; color: #66748a !important; font-size: 20px !important; }
+.hangout-popup { display: grid; gap: 8px; padding: 17px 16px 15px; font-family: inherit; }
+.hangout-popup-label { color: #718099; font-size: 8px; font-weight: 700; letter-spacing: 1.4px; }
+.hangout-popup > strong { padding-right: 12px; color: #202e43; font-size: 14px; line-height: 1.4; }
+.hangout-popup-author { color: #4c5c72; font-size: 11px; }
+.hangout-popup-time, .hangout-popup-place { color: #64738a; font-size: 10px; line-height: 1.5; }
+.hangout-rsvp-button { display: flex; align-items: center; justify-content: center; min-height: 38px; margin-top: 4px; border: 0; border-radius: 9px; background: #2457d6; color: #fff; font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; transition: background 160ms, transform 160ms; }
+.hangout-rsvp-button:hover { background: #1942ad; transform: translateY(-1px); }
+.hangout-rsvp-button.is-going, .hangout-rsvp-button:disabled { background: #2d8a5c; cursor: default; transform: none; }
+@media (max-width: 700px) { .campus-map-canvas { height: 55svh; min-height: 330px; border-radius: 13px; } }

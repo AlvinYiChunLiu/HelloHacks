@@ -3,6 +3,10 @@ import './ProfileColorPicker.css'
 
 export default function ProfileColorPicker({ value, onChange, error }) {
   const selected = PROFILE_COLORS.find((color) => color.value === value)
+  const presets = ['Blue', 'Rose', 'Green', 'Amber', 'Violet'].map((name) => PROFILE_COLORS.find((color) => color.name === name)).filter(Boolean)
+  const options = selected && !presets.some((color) => color.value === selected.value)
+    ? [...presets, { ...selected, name: `${selected.name} (current)` }]
+    : presets
 
   return (
     <fieldset className="profile-color-picker" aria-describedby={error ? 'favoriteColor-error' : 'favoriteColor-hint'}>
@@ -14,7 +18,7 @@ export default function ProfileColorPicker({ value, onChange, error }) {
         <div><strong aria-live="polite">{selected ? `${selected.name} looks like you.` : 'A little color, a little you.'}</strong><p id="favoriteColor-hint">Your choice colors your pages and frames your profile picture.</p></div>
       </div>
       <div className="profile-color-grid">
-        {PROFILE_COLORS.map(({ name, value: color }) => (
+        {options.map(({ name, value: color }) => (
           <label key={color} className={`profile-color-choice${value === color ? ' is-selected' : ''}`}>
             <input type="radio" name="favoriteColor" value={color} checked={value === color} onChange={() => onChange(color)} aria-invalid={Boolean(error)} />
             <span className="profile-color-swatch" style={{ backgroundColor: color }} aria-hidden="true">{value === color && <span>✓</span>}</span>
@@ -23,7 +27,7 @@ export default function ProfileColorPicker({ value, onChange, error }) {
         ))}
       </div>
       {error && <p className="field-error" id="favoriteColor-error">{error}</p>}
-      <p className="color-choice-note">30 colors. Pick the one that feels like you.</p>
+      <p className="color-choice-note">Choose from 5 quick colors. You can change it later.</p>
     </fieldset>
   )
 }
