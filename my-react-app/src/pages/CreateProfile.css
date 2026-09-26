@@ -710,3 +710,12 @@
 .summary-check {
   color: var(--green);
 }
+
+.step-list li:nth-child(6) { --step-color: var(--red); --step-tint: var(--red-light); }
+.edit-section-button { padding: 5px 0; border: 0; border-radius: 4px; background: transparent; color: inherit; font-size: inherit; font-weight: inherit; text-align: left; }
+.edit-section-button:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 600px) {
+  .step-list { gap: 8px; }
+  .step-list li { flex: 1; min-width: 0; font-size: 9px; }
+  .edit-section-button { text-align: center; }
+}
