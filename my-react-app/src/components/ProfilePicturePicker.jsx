@@ -39,7 +39,7 @@ async function preparePhoto(file) {
   }
 }
 
-export default function ProfilePicturePicker({ value, onChange, profileName, color }) {
+export default function ProfilePicturePicker({ value, onChange, profileName, color, onPreparingChange }) {
   const [error, setError] = useState('')
   const [isPreparing, setIsPreparing] = useState(false)
   const requestRef = useRef(0)
@@ -47,6 +47,8 @@ export default function ProfilePicturePicker({ value, onChange, profileName, col
   const avatar = normalizeAvatar(value)
 
   useEffect(() => () => { requestRef.current += 1 }, [])
+
+  useEffect(() => { onPreparingChange?.(isPreparing) }, [isPreparing, onPreparingChange])
 
   function chooseAvatar(nextAvatar) {
     requestRef.current += 1

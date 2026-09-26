@@ -3,6 +3,9 @@ import { ArrowIcon, BuddyMark, CloseIcon, EditIcon } from '../components/Icons'
 import ProfileAvatar from '../components/ProfileAvatar'
 import ProfileSocials from '../components/ProfileSocials'
 import CountryFlag from '../components/CountryFlag'
+import CopyButton from '../components/CopyButton'
+import { BookmarkIcon, SearchIcon, FilterIcon, SparkIcon } from '../components/DiscoveryIcons'
+import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, searchBuddies } from '../lib/discovery'
 import countries from '../data/countries.json'
 import { SOCIAL_PLATFORMS } from '../data/socialPlatforms'
 import ubcOptions from '../data/ubcOptions.json'
@@ -59,27 +62,30 @@ function Tags({ values, empty = 'Not added yet', className = '' }) {
   return values?.length ? <div className={`dashboard-tags ${className}`}>{values.map((value) => <span key={value}>{value}</span>)}</div> : <span className="profile-empty">{empty}</span>
 }
 
-function BuddyCard({ buddy, category, onView, showScore = false }) {
+function SaveBuddyButton({ buddy, saved, onSave, full = false }) {
+  return <button className={`save-buddy${saved ? ' is-saved' : ''}${full ? ' save-buddy--full' : ''}`} aria-label={`${saved ? 'Unsave' : 'Save'} ${buddy.name}`} aria-pressed={saved} onClick={() => onSave(buddy)}><BookmarkIcon filled={saved} />{full && <span>{saved ? 'Saved buddy' : 'Save buddy'}</span>}</button>
+}
+
+function BuddyCard({ buddy, category, onView, saved, onSave, showScore = false }) {
   const shared = category === 'nationality' ? [countryName(buddy.nationality)] : buddy.shared
   return (
     <article className="buddy-card">
       <div className="buddy-card-heading">
         <ProfileAvatar profile={buddy} />
         <div><h4>{buddy.name}</h4><p>@{buddy.username}</p></div>
-        <CountryFlag code={buddy.nationality} />
+        <SaveBuddyButton buddy={buddy} saved={saved} onSave={onSave} />
       </div>
+      <div className="buddy-location"><CountryFlag code={buddy.nationality} /><span>{countryName(buddy.nationality)}</span>{genderName(buddy.gender) && <span className="buddy-gender">{genderName(buddy.gender)}</span>}</div>
       <p className="buddy-major">{buddy.major}</p>
-      {genderName(buddy.gender) && <p className="buddy-gender">{genderName(buddy.gender)}</p>}
       <p className="buddy-campus">{yearName(buddy.year)} <span aria-hidden="true">&middot;</span> {buddy.residence}</p>
-      {showScore && <p className="buddy-common-count">{buddy.commonCount} {buddy.commonCount === 1 ? 'detail' : 'details'} in common</p>}
-      <Tags values={shared.slice(0, 2)} className="shared-tags" />
+      {showScore && buddy.commonCount > 0 && <p className="buddy-common-count"><SparkIcon />{buddy.commonCount} {buddy.commonCount === 1 ? 'thing' : 'things'} in common</p>}
+      <Tags values={shared.slice(0, 2)} className="shared-tags" empty="A new perspective to discover" />
       <ProfileSocials accounts={buddy.socialMedia} compact />
-      <button className="view-buddy" onClick={() => onView(buddy)}>View profile <ArrowIcon /></button>
+      <button className="view-buddy" onClick={() => onView(buddy)}>Meet {buddy.name.split(' ')[0]} <ArrowIcon /></button>
     </article>
   )
 }
-
-function BuddyColumn({ title, category, description, matches, profile, onView }) {
+function BuddyColumn({ title, category, description, matches, profile, onView, savedIds, onSave }) {
   const [expanded, setExpanded] = useState(false)
   const visible = expanded ? matches : matches.slice(0, 3)
   const emptyMessage = category === 'nationality'
@@ -95,7 +101,7 @@ function BuddyColumn({ title, category, description, matches, profile, onView })
         <p>{description}</p>
       </header>
       <div className="buddy-list">
-        {visible.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category={category} onView={onView} />)}
+        {visible.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category={category} onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} />)}
         {!matches.length && <div className="buddy-empty"><p>{emptyMessage}</p><a href="#/edit-profile">Edit profile <span aria-hidden="true">&rarr;</span></a></div>}
       </div>
       {matches.length > 3 && <button className="column-more" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? 'Show fewer' : `See all ${matches.length} buddies`}</button>}
@@ -126,7 +132,7 @@ function MultiFilterGroup({ title, options, selected, onChange }) {
   )
 }
 
-function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset, onApply }) {
+function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset, onApply, resultCount }) {
   const dialogRef = useRef(null)
   useEffect(() => {
     const dialog = dialogRef.current
@@ -145,7 +151,7 @@ function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset,
         <button className="buddy-dialog-close" aria-label="Close buddy filters" onClick={onClose}><CloseIcon /></button>
         <p className="eyebrow">Find your people</p>
         <h2 id="buddy-filter-title">Who would you like to meet?</h2>
-        <p className="buddy-filter-description">Choose profile details to narrow the list. Different sections work together; selections in one section match any choice. With no filters, you’ll see everyone.</p>
+        <p className="buddy-filter-description">Start with what matters to you. Choose any options within a section, then combine sections to narrow your search.</p>
         <form onSubmit={(event) => { event.preventDefault(); onApply() }}>
           <div className="buddy-filter-select-grid">
             <label className="buddy-filter-select"><span>Nationality</span><select value={filters.nationality} onChange={(event) => setField('nationality', event.target.value)}><option value="">Any nationality</option>{options.nationality.map(({ code, name }) => <option key={code} value={code}>{name}</option>)}</select></label>
@@ -161,7 +167,7 @@ function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset,
           </div>
           <div className="buddy-filter-actions">
             <button type="button" className="dashboard-secondary" onClick={onReset}>Clear choices</button>
-            <button type="submit" className="filter-submit">Filter buddies <ArrowIcon /></button>
+            <button type="submit" className="filter-submit">Show {resultCount} {resultCount === 1 ? 'buddy' : 'buddies'} <ArrowIcon /></button>
           </div>
         </form>
       </div>
@@ -169,33 +175,21 @@ function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset,
   )
 }
 
-function BuddyResults({ matches, filters, onEditFilters, onClearFilters, onView }) {
-  const selected = [
-    filters.nationality && countryName(filters.nationality),
-    filters.major,
-    filters.year && yearName(filters.year),
-    filters.residence,
-    ...filters.sports,
-    ...filters.hobbies,
-    ...filters.languages,
-    ...filters.socialMedia,
-  ].filter(Boolean)
+function BuddyResults({ matches, savedIds, onSave, onView, isSaved, onReset, onDiscover, hasCriteria }) {
   return (
     <section className="buddy-filter-results" aria-labelledby="filtered-buddies-title">
       <div className="discovery-heading">
-        <div><h2 id="filtered-buddies-title">Matching buddies</h2><p>Ranked by how many profile details you have in common.</p></div>
-        <span className="sample-badge">{matches.length} {matches.length === 1 ? 'profile' : 'profiles'}</span>
+        <div><h2 id="filtered-buddies-title">{isSaved ? 'Your saved buddies' : 'People to get to know'}</h2><p>{isSaved ? 'A few familiar faces to come back to.' : 'A little common ground. A good place to start.'}</p></div>
+        <span className="results-count" role="status">{matches.length} {matches.length === 1 ? 'person' : 'people'}</span>
       </div>
-      {selected.length > 0 && <div className="buddy-filter-summary"><span>Filters</span><Tags values={selected} /></div>}
       <div className="buddy-results-grid">
-        {matches.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category="filtered" onView={onView} showScore />)}
-        {!matches.length && <div className="buddy-filter-empty"><h3>No profiles match those filters yet.</h3><p>Try removing a filter to see more buddies.</p></div>}
+        {matches.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category="filtered" onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} showScore />)}
+        {!matches.length && <div className="buddy-filter-empty"><div className="empty-state-icon">{isSaved ? <BookmarkIcon /> : <SearchIcon />}</div><h3>{isSaved && !savedIds.length ? 'Keep a good connection in mind.' : 'No matches just yet.'}</h3><p>{isSaved && !savedIds.length ? 'Tap the bookmark on a profile to find it here later.' : 'Try a different search or give your filters a little more room.'}</p><button className="filter-edit-button" onClick={hasCriteria ? onReset : onDiscover}>{hasCriteria ? 'Reset search and filters' : 'Discover buddies'}<ArrowIcon /></button></div>}
       </div>
-      <div className="buddy-results-actions"><button className="dashboard-secondary" onClick={onClearFilters}>Clear filters</button><button className="filter-edit-button" onClick={onEditFilters}>Change filters</button></div>
+      {isSaved && matches.length > 0 && <p className="saved-note">Saved in this browser tab for your profile.</p>}
     </section>
   )
 }
-
 function ProfilePanel({ profile, onEdit }) {
   const age = getAge(profile.birthday)
   const birthday = age === null ? 'Not added' : new Date(`${profile.birthday}T12:00:00`).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -229,7 +223,7 @@ function ProfilePanel({ profile, onEdit }) {
   )
 }
 
-function BuddyDialog({ buddy, profile, onClose }) {
+function BuddyDialog({ buddy, profile, onClose, saved, onSave }) {
   const dialogRef = useRef(null)
   useEffect(() => {
     const dialog = dialogRef.current
@@ -248,21 +242,30 @@ function BuddyDialog({ buddy, profile, onClose }) {
         <div className="profile-country"><CountryFlag code={buddy.nationality} /><span>{countryName(buddy.nationality)}</span></div>
         <p className="buddy-bio">{buddy.bio}</p>
         <dl className="buddy-dialog-details"><div><dt>Studies</dt><dd>{buddy.major} &middot; {yearName(buddy.year)}</dd></div><div><dt>Residence</dt><dd>{buddy.residence}</dd></div><div><dt>Languages</dt><dd>{buddy.languages.join(', ')}</dd></div>{genderName(buddy.gender) && <div><dt>Gender</dt><dd>{genderName(buddy.gender)}</dd></div>}</dl>
+        <div className="buddy-all-interests"><h3>Outside the classroom</h3><Tags values={[...buddy.sports, ...buddy.hobbies]} /></div>
         <ProfileSocials accounts={buddy.socialMedia} />
         <div className="buddy-shared"><h3>You have in common</h3><Tags values={[...new Set(shared)]} empty="A new perspective to share." /></div>
+        <div className="icebreaker"><div><SparkIcon /><h3>Break the ice</h3></div><p>{conversationStarter(profile, buddy)}</p><CopyButton text={conversationStarter(profile, buddy)} label="Copy conversation starter" /></div>
         <p className="sample-profile-note">Sample profile for this preview. Messaging is not available yet.</p>
-        <div className="buddy-dialog-actions"><button className="dashboard-secondary" onClick={onClose}>Back to buddies</button></div>
+        <div className="buddy-dialog-actions"><SaveBuddyButton buddy={buddy} saved={saved} onSave={onSave} full /><button className="dashboard-secondary" onClick={onClose}>Back to buddies</button></div>
       </div>
     </dialog>
   )
 }
+
+const countryNames = Object.fromEntries(countries.map(({ code, name }) => [code, name]))
+const filterLabel = ({ field, value }) => field === 'nationality' ? countryName(value) : field === 'year' ? yearName(value) : value
 
 export default function MainPage({ profile, onEdit }) {
   const [selectedBuddy, setSelectedBuddy] = useState(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [draftFilters, setDraftFilters] = useState(emptyBuddyFilters)
   const [appliedFilters, setAppliedFilters] = useState(emptyBuddyFilters)
-  const [hasFiltered, setHasFiltered] = useState(false)
+  const [view, setView] = useState('discover')
+  const [query, setQuery] = useState('')
+  const [sort, setSort] = useState('common')
+  const [savedIds, setSavedIds] = useState(() => readSavedBuddies(profile))
+  const [feedback, setFeedback] = useState('')
   const [backendUsers, setBackendUsers] = useState([])
   const titleRef = useRef(null)
 
@@ -290,68 +293,81 @@ export default function MainPage({ profile, onEdit }) {
     residence: [...new Set([...ubcOptions.residences.map(({ name }) => name), ...buddies.map((buddy) => buddy.residence), 'Off campus / commuting', profile.residence])].filter(Boolean).sort((a, b) => a.localeCompare(b, 'en')),
   }
 
-  useEffect(() => { titleRef.current?.focus({ preventScroll: true }) }, [])
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true })
+    return () => window.clearTimeout(feedbackTimer.current)
+  }, [])
+
+  function toggleSave(buddy) {
+    const alreadySaved = savedIds.includes(buddy.id)
+    const next = alreadySaved ? savedIds.filter((id) => id !== buddy.id) : [...savedIds, buddy.id]
+    setSavedIds(next)
+    const stored = saveBuddies(profile, next)
+    setFeedback(`${buddy.name.split(' ')[0]} ${alreadySaved ? 'removed from saved buddies' : 'saved for later'}.${stored ? '' : ' This change will last until you leave the page.'}`)
+    window.clearTimeout(feedbackTimer.current)
+    feedbackTimer.current = window.setTimeout(() => setFeedback(''), 4000)
+  }
 
   function findBuddy() {
-    setDraftFilters({
-      ...appliedFilters,
-      sports: [...appliedFilters.sports],
-      hobbies: [...appliedFilters.hobbies],
-      languages: [...appliedFilters.languages],
-      socialMedia: [...appliedFilters.socialMedia],
-    })
+    setDraftFilters({ ...appliedFilters })
     setFilterOpen(true)
   }
 
-  function applyFilters() {
-    setAppliedFilters({
-      ...draftFilters,
-      sports: [...draftFilters.sports],
-      hobbies: [...draftFilters.hobbies],
-      languages: [...draftFilters.languages],
-      socialMedia: [...draftFilters.socialMedia],
-    })
-    setHasFiltered(true)
-    setFilterOpen(false)
-  }
-
   function clearFilters() {
-    setDraftFilters(emptyBuddyFilters())
+    setQuery('')
     setAppliedFilters(emptyBuddyFilters())
-    setHasFiltered(false)
-    setFilterOpen(false)
+    setDraftFilters(emptyBuddyFilters())
   }
 
-  function viewBuddy(buddy) {
-    setSelectedBuddy(buddy)
+  function chooseView(nextView) {
+    setView(nextView)
+    clearFilters()
+    setSort('common')
+  }
+
+  function quickFilter(field, value) {
+    setAppliedFilters({ ...emptyBuddyFilters(), [field]: value })
+    setView('all')
+    setQuery('')
   }
 
   return (
-    <main className="dashboard">
+    <main className="dashboard" id="main-content">
       <section className="dashboard-intro" aria-labelledby="dashboard-title">
-        <p className="eyebrow">Different stories. A little common ground.</p>
-        <h2 id="dashboard-title" ref={titleRef} tabIndex={-1}>Your next hello starts here.</h2>
-        <p>Find someone who feels a little like home. Or brings a whole new perspective.</p>
-        <button className="find-buddy-button" onClick={findBuddy}><BuddyMark />find buddy<ArrowIcon /></button>
-        <p className="no-suggestions">Choose a major, year, sport, nationality, or other profile detail.</p>
+        <div className="campus-pill">UBC Vancouver</div>
+        <p className="eyebrow">Good to see you, {profile.name.split(' ')[0] || 'buddy'}.</p>
+        <h2 id="dashboard-title" ref={titleRef} tabIndex={-1}>Your people are<br /><span>closer than you think.</span></h2>
+        <p>A study partner. A familiar language. A new friend.<br />Find a little common ground and take it from there.</p>
+        <button className="find-buddy-button" onClick={findBuddy}><BuddyMark />Find buddy<ArrowIcon /></button>
+        <div className="hero-orbit hero-orbit--one" aria-hidden="true" /><div className="hero-orbit hero-orbit--two" aria-hidden="true" />
       </section>
+      <div className="discovery-toolbar">
+        <nav className="discovery-tabs" aria-label="Browse buddies">
+          {[['discover', 'For you'], ['all', 'Everyone'], ['saved', 'Saved']].map(([value, label]) => <button key={value} className={view === value ? 'is-active' : ''} aria-current={view === value ? 'page' : undefined} onClick={() => chooseView(value)}>{value === 'saved' && <BookmarkIcon filled={view === value} />}{label}{value === 'saved' && <span>{savedCount}</span>}</button>)}
+        </nav>
+        <div className="discovery-tools">
+          <div className="buddy-search"><SearchIcon /><label className="sr-only" htmlFor="buddy-search">Search names, countries, majors, or interests</label><input id="buddy-search" type="search" placeholder="Name, country, interest..." value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button onClick={() => setQuery('')} aria-label="Clear search"><CloseIcon /></button>}</div>
+          <button className={`open-filters${choices.length ? ' has-filters' : ''}`} onClick={findBuddy}><FilterIcon /><span>Filters</span>{choices.length > 0 && <span className="filter-count">{choices.length}</span>}</button>
+        </div>
+      </div>
+      <div className="discovery-options">
+        <div className="quick-filters">{!hasCriteria && view === 'discover' ? <><span>Try a little common ground</span>{profile.residence && <button onClick={() => quickFilter('residence', profile.residence)}>Same residence</button>}{profile.major && <button onClick={() => quickFilter('major', profile.major)}>Same major</button>}{profile.languages.length > 0 && <button onClick={() => quickFilter('languages', profile.languages)}>Shared language</button>}</> : <><span role="status">{filteredBuddies.length} {filteredBuddies.length === 1 ? 'person' : 'people'} to explore</span>{choices.map((choice) => <button key={`${choice.field}-${choice.value}`} onClick={() => setAppliedFilters(removeFilterChoice(appliedFilters, choice.field, choice.value))} aria-label={`Remove ${filterLabel(choice)} filter`}>{filterLabel(choice)}<CloseIcon /></button>)}{hasCriteria && <button className="clear-discovery" onClick={clearFilters}>Clear all</button>}</>}</div>
+        <label className="buddy-sort"><span className="sr-only">Sort buddies</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="common">Most in common</option><option value="name">Name: A to Z</option></select></label>
+      </div>
       <div className="dashboard-grid">
-        {hasFiltered ? (
-          <BuddyResults matches={filteredBuddies} filters={appliedFilters} onEditFilters={findBuddy} onClearFilters={clearFilters} onView={viewBuddy} />
-        ) : (
-          <section className="buddy-discovery" aria-labelledby="discovery-title">
-            <div className="discovery-heading"><div><h2 id="discovery-title">A few things in common</h2><p>A familiar place, a favorite game, or something you love.</p></div></div>
-            <div className="buddy-columns">
-              <BuddyColumn title="Nationality" category="nationality" description={`A little closer to ${countryName(profile.nationality)}.`} matches={matches.nationality} profile={profile} onView={viewBuddy} />
-              <BuddyColumn title="Sport" category="sports" description="A teammate for your next game." matches={matches.sports} profile={profile} onView={viewBuddy} />
-              <BuddyColumn title="Hobbies" category="hobbies" description="Good company for your favorite things." matches={matches.hobbies} profile={profile} onView={viewBuddy} />
-            </div>
-          </section>
-        )}
+        {showColumns ? <section className="buddy-discovery" aria-labelledby="discovery-title">
+          <div className="discovery-heading"><div><h2 id="discovery-title">A few things in common</h2><p>Start with something familiar. Discover someone new.</p></div><span className="curated-mark"><SparkIcon />Picked for you</span></div>
+          <div className="buddy-columns">
+            <BuddyColumn title="Nationality" category="nationality" description={`A little closer to ${countryName(profile.nationality)}.`} matches={matches.nationality} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} />
+            <BuddyColumn title="Sport" category="sports" description="A teammate for your next game." matches={matches.sports} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} />
+            <BuddyColumn title="Hobbies" category="hobbies" description="Good company for your favorite things." matches={matches.hobbies} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} />
+          </div>
+        </section> : <BuddyResults matches={filteredBuddies} savedIds={savedIds} onSave={toggleSave} onView={setSelectedBuddy} isSaved={view === 'saved'} hasCriteria={hasCriteria} onReset={clearFilters} onDiscover={() => chooseView('discover')} />}
         <ProfilePanel profile={profile} onEdit={onEdit} />
       </div>
-      <BuddyFilterDialog open={filterOpen} filters={draftFilters} options={filterOptions} onChange={setDraftFilters} onClose={() => setFilterOpen(false)} onReset={() => setDraftFilters(emptyBuddyFilters())} onApply={applyFilters} />
-      {selectedBuddy && <BuddyDialog buddy={selectedBuddy} profile={profile} onClose={() => setSelectedBuddy(null)} />}
+      <div className={`buddy-toast${feedback ? ' is-visible' : ''}`} role="status">{feedback}</div>
+      <BuddyFilterDialog open={filterOpen} filters={draftFilters} options={filterOptions} resultCount={previewCount} onChange={setDraftFilters} onClose={() => setFilterOpen(false)} onReset={() => setDraftFilters(emptyBuddyFilters())} onApply={() => { setAppliedFilters(draftFilters); if (view !== 'saved') setView('all'); setFilterOpen(false) }} />
+      {selectedBuddy && <BuddyDialog key={selectedBuddy.id} buddy={selectedBuddy} profile={profile} saved={savedIds.includes(selectedBuddy.id)} onSave={toggleSave} onClose={() => setSelectedBuddy(null)} />}
     </main>
   )
 }
