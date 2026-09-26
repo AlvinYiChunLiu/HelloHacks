@@ -5,7 +5,9 @@ import CreateProfile from './pages/CreateProfile'
 import SignIn from './pages/SignIn'
 import MainPage from './pages/MainPage'
 import { clearActiveProfile, DEV_PROFILE, normalizeProfile, readActiveProfile, saveActiveProfile } from './lib/profileSession'
+import { getThemeStyle } from './lib/theme'
 import './App.css'
+import './theme.css'
 
 function readRoute() {
   const path = window.location.hash.slice(1) || '/'
@@ -41,11 +43,17 @@ export default function App() {
   const [route, setRoute] = useState(readRoute)
   const [profile, setProfile] = useState(readActiveProfile)
   const [notice, setNotice] = useState('')
+  const [draftColor, setDraftColor] = useState(null)
   const activeRoute = ['/main', '/edit-profile'].includes(route) && !profile ? '/sign-in' : route
   const isForm = ['/create-profile', '/edit-profile'].includes(activeRoute)
+  const isPersonalTheme = isForm || activeRoute === '/main'
+  const themeColor = isForm
+    ? draftColor ?? (activeRoute === '/edit-profile' ? profile.favoriteColor : '')
+    : profile?.favoriteColor
 
   useEffect(() => {
     const handleRoute = () => {
+      setDraftColor(null)
       setRoute(readRoute())
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
@@ -82,7 +90,7 @@ export default function App() {
   }
 
   return (
-    <div className={`home${isForm ? ' onboarding-shell' : activeRoute === '/main' ? ' dashboard-shell' : ''}`}>
+    <div className={`home${isForm ? ' onboarding-shell' : activeRoute === '/main' ? ' dashboard-shell' : ''}${isPersonalTheme ? ` personal-theme${themeColor ? '' : ' theme-unselected'}` : ''}`} style={isPersonalTheme ? getThemeStyle(themeColor) : undefined}>
       <header className="site-header">
         <a className="brand" href={profile ? '#/main' : '#/'} aria-label="InterBuddies home"><BuddyMark className="brand-mark" /><h1>InterBuddies</h1></a>
         {isForm && <span className="header-note">{activeRoute === '/edit-profile' ? 'Make it feel like you.' : 'A little closer to your people.'}</span>}
@@ -90,8 +98,8 @@ export default function App() {
       </header>
       {notice && activeRoute === '/main' && <div className="profile-update-notice"><span role="status">{notice}</span><button onClick={() => setNotice('')} aria-label="Dismiss notification"><CloseIcon /></button></div>}
       {activeRoute === '/' && <Welcome />}
-      {activeRoute === '/create-profile' && <CreateProfile key="create" onComplete={completeProfile} onExit={() => { window.location.hash = '/' }} />}
-      {activeRoute === '/edit-profile' && <CreateProfile key="edit" mode="edit" initialProfile={profile} onComplete={updateProfile} onExit={() => { window.location.hash = '/main' }} />}
+      {activeRoute === '/create-profile' && <CreateProfile key="create" onComplete={completeProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/' }} />}
+      {activeRoute === '/edit-profile' && <CreateProfile key="edit" mode="edit" initialProfile={profile} onComplete={updateProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/main' }} />}
       {activeRoute === '/sign-in' && <SignIn onSignIn={signInAsDev} />}
       {activeRoute === '/main' && <MainPage profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} />}
       <footer className="site-footer">

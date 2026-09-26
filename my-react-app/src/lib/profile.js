@@ -1,4 +1,5 @@
 import { DEFAULT_PROFILE_COLOR, LANGUAGES, PROFILE_COLORS } from '../data/profileOptions.js'
+import { normalizeAvatar } from './avatar.js'
 
 export const UNIVERSITY = 'University of British Columbia'
 
@@ -31,7 +32,7 @@ export function getAge(birthday, today = new Date()) {
 
 export function emptyProfile() {
   return {
-    favoriteColor: '', name: '', username: '', birthday: '', nationality: '', languages: [],
+    favoriteColor: '', name: '', username: '', birthday: '', gender: '', avatar: null, nationality: '', languages: [],
     university: UNIVERSITY, residence: '', year: '', major: '',
     hobbies: [], sports: [], socialMedia: [], password: '',
   }
@@ -47,16 +48,19 @@ export function validateStep(step, profile, options, today = new Date()) {
     else if (profile.name.trim().length > 80) errors.name = 'Use 80 characters or fewer.'
     if (!/^[a-zA-Z0-9_]{3,24}$/.test(profile.username.trim())) errors.username = 'Use 3–24 letters, numbers, or underscores.'
     if (getAge(profile.birthday, today) === null) errors.birthday = 'Choose a valid birthday between 1900 and today.'
+    if (!['male', 'female', 'prefer-not-to'].includes(profile.gender)) errors.gender = 'Choose a gender option, or prefer not to say.'
+  }
+  if (step === 2) {
     if (!options.countries.some((country) => country.code === profile.nationality)) errors.nationality = 'Choose a country from the list.'
     if (!Array.isArray(profile.languages) || !profile.languages.length || profile.languages.some((language) => !LANGUAGES.includes(language))) errors.languages = 'Choose at least one language from the list.'
   }
-  if (step === 2) {
+  if (step === 3) {
     if (profile.university !== UNIVERSITY) errors.university = 'Choose the University of British Columbia.'
     if (!options.residences.some((residence) => residence.value === profile.residence)) errors.residence = 'Choose your residence or off-campus housing.'
     if (!/^[1-6]$/.test(String(profile.year))) errors.year = 'Choose your year, from 1st to 6th.'
     if (!options.majors.some((major) => major.value === profile.major)) errors.major = 'Choose a major from the list.'
   }
-  if (step === 5) {
+  if (step === 6) {
     if (profile.password.length < 8 || profile.password.length > 128) errors.password = 'Use a password with 8–128 characters.'
   }
   return errors
@@ -84,11 +88,12 @@ export function registrationPayload(profile) {
 
 export function stepForField(field) {
   if (field === 'favoriteColor') return 0
-  if (['name', 'username', 'birthday', 'nationality', 'languages'].includes(field)) return 1
-  if (['university', 'residence', 'year', 'major'].includes(field)) return 2
-  if (['hobbies', 'sports'].includes(field)) return 3
-  if (field === 'socialMedia') return 4
-  return 5
+  if (['name', 'username', 'birthday', 'avatar', 'gender'].includes(field)) return 1
+  if (['nationality', 'languages'].includes(field)) return 2
+  if (['university', 'residence', 'year', 'major'].includes(field)) return 3
+  if (['hobbies', 'sports'].includes(field)) return 4
+  if (field === 'socialMedia') return 5
+  return 6
 }
 
 // Build an independent form draft; credentials are never prefilled for editing.
@@ -98,6 +103,8 @@ export function profileDraft(initialProfile = {}) {
     if (typeof initialProfile[field] === 'string') draft[field] = initialProfile[field]
   }
   draft.year = initialProfile.year ? String(initialProfile.year) : ''
+  draft.gender = ['male', 'female', 'prefer-not-to'].includes(initialProfile.gender) ? initialProfile.gender : 'prefer-not-to'
+  draft.avatar = normalizeAvatar(initialProfile.avatar)
   draft.favoriteColor = PROFILE_COLORS.some((color) => color.value === initialProfile.favoriteColor)
     ? initialProfile.favoriteColor : DEFAULT_PROFILE_COLOR
   for (const field of ['languages', 'hobbies', 'sports']) {
@@ -115,6 +122,8 @@ export function profileChanges(profile) {
     name: profile.name.trim(),
     username: profile.username.trim().toLowerCase(),
     birthday: profile.birthday,
+    gender: profile.gender,
+    avatar: normalizeAvatar(profile.avatar),
     nationality: profile.nationality,
     languages: [...new Set(profile.languages)],
     university: profile.university,

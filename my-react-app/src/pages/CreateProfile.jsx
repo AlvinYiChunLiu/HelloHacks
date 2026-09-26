@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowIcon } from '../components/Icons'
 import SearchSelect from '../components/SearchSelect'
 import ProfileColorPicker from '../components/ProfileColorPicker'
+import ProfilePicturePicker from '../components/ProfilePicturePicker'
 import LanguagePicker from '../components/LanguagePicker'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
@@ -10,8 +11,9 @@ import { emptyProfile, getAge, HOBBIES, profileChanges, profileDraft, registrati
 import './CreateProfile.css'
 
 const STEPS = [
-  { label: 'Your color', title: 'What’s your favorite color?', description: 'Give your profile a color that feels like you.' },
+  { label: 'Your color', title: 'What’s your favorite color?', description: 'Pick a color and make InterBuddies feel like you.' },
   { label: 'About you', title: 'A little about you.', description: 'Every friendship starts with an introduction.' },
+  { label: 'Nationality', title: 'Where are you from?', description: 'Share your nationality and the languages you speak.' },
   { label: 'Campus life', title: 'Find your common ground.', description: 'Let’s start with where you study and call home.' },
   { label: 'Your interests', title: 'What makes you, you?', description: 'Pick the things you enjoy. You can choose as many as you like.' },
   { label: 'Social media', title: 'Where can people find you?', description: 'Choose any social platforms you use and add your username for each.' },
@@ -120,7 +122,7 @@ function SocialMediaPicker({ selected, onChange }) {
   )
 }
 
-export default function CreateProfile({ onComplete, onExit, initialProfile, mode = 'create' }) {
+export default function CreateProfile({ onComplete, onExit, onColorChange, initialProfile, mode = 'create' }) {
   const isEditing = mode === 'edit'
   const steps = isEditing ? STEPS.slice(0, -1) : STEPS
   const [profile, setProfile] = useState(() => isEditing ? profileDraft(initialProfile) : emptyProfile())
@@ -134,6 +136,10 @@ export default function CreateProfile({ onComplete, onExit, initialProfile, mode
   const requestRef = useRef(null)
   const current = steps[step]
   const age = getAge(profile.birthday)
+
+  useEffect(() => {
+    onColorChange?.(profile.favoriteColor)
+  }, [onColorChange, profile.favoriteColor])
 
   useEffect(() => {
     titleRef.current?.focus({ preventScroll: true })
@@ -225,7 +231,7 @@ export default function CreateProfile({ onComplete, onExit, initialProfile, mode
       }
       if (!result?.profile?.id) throw new Error('Unexpected registration response')
       const changes = profileChanges(profile)
-      onComplete({ ...result.profile, favoriteColor: changes.favoriteColor, languages: changes.languages, socialMedia: changes.socialMedia })
+      onComplete({ ...result.profile, favoriteColor: changes.favoriteColor, languages: changes.languages, gender: changes.gender, avatar: changes.avatar, socialMedia: changes.socialMedia })
     } catch {
       if (requestRef.current === controller) setServerError('We couldn’t connect. Please try again in a moment.')
     } finally {
@@ -254,14 +260,14 @@ export default function CreateProfile({ onComplete, onExit, initialProfile, mode
       </aside>
 
       <section className="onboarding-card" aria-labelledby="step-title">
-        <div className="step-caption"><span>{isEditing ? 'Section' : 'Step'} {step + 1} of {steps.length}</span><span>{isEditing ? 'Edit your profile' : step === 3 || step === 4 ? 'Optional' : 'Create your profile'}</span></div>
+        <div className="step-caption"><span>{isEditing ? 'Section' : 'Step'} {step + 1} of {steps.length}</span><span>{isEditing ? 'Edit your profile' : step === 4 || step === 5 ? 'Optional' : 'Create your profile'}</span></div>
         <div className="step-progress" role="progressbar" aria-label={isEditing ? 'Edit profile' : 'Profile creation'} aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={step + 1} aria-valuetext={`Step ${step + 1} of ${steps.length}: ${current.label}`}><span style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
         <h2 id="step-title" ref={titleRef} tabIndex={-1}>{current.title}</h2>
         <p className="step-description">{current.description}</p>
 
         <form ref={formRef} onSubmit={handleSubmit} noValidate>
           {Object.values(errors).some(Boolean) && <p className="sr-only" role="alert">Please check the highlighted fields.</p>}
-          <fieldset className="step-fields" disabled={submitting}>
+          <fieldset className="step-fields" disabled={submitting} key={step}>
             <legend className="sr-only">{current.label}</legend>
             {step === 0 && <ProfileColorPicker value={profile.favoriteColor} onChange={(value) => update('favoriteColor', value)} error={errors.favoriteColor} />}
             {step === 1 && (
@@ -275,13 +281,30 @@ export default function CreateProfile({ onComplete, onExit, initialProfile, mode
                 <Field name="birthday" label="Birthday" error={errors.birthday}>
                   <div className="birthday-input"><input {...inputProps('birthday')} type="date" min="1900-01-01" max={todayDate()} autoComplete="bday" /><output className={`age-badge${age === null ? ' is-empty' : ''}`} htmlFor="birthday" aria-live="polite">{age === null ? 'Your age' : `${age} ${age === 1 ? 'year' : 'years'} old`}</output></div>
                 </Field>
+                <ProfilePicturePicker value={profile.avatar} onChange={(value) => update('avatar', value)} profileName={profile.name} color={profile.favoriteColor} />
+                <fieldset className="gender-picker" aria-describedby={errors.gender ? 'gender-error' : 'gender-hint'}>
+                  <legend>Gender</legend>
+                  <div className="gender-options">
+                    {[['male', 'Male'], ['female', 'Female'], ['prefer-not-to', 'Prefer not to']].map(([value, label]) => (
+                      <label key={value} className={`gender-option${profile.gender === value ? ' is-selected' : ''}`}>
+                        <input type="radio" name="gender" value={value} checked={profile.gender === value} onChange={() => update('gender', value)} aria-invalid={Boolean(errors.gender)} required />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {errors.gender ? <p className="field-error" id="gender-error">{errors.gender}</p> : <p className="field-hint" id="gender-hint">Choose “Prefer not to” to keep gender off your profile.</p>}
+                </fieldset>
+              </div>
+            )}
+            {step === 2 && (
+              <div className="fields-grid">
                 <Field name="nationality" label="Nationality" error={errors.nationality}>
                   <SearchSelect id="nationality" name="nationality" options={countryOptions} value={profile.nationality} onChange={(value) => update('nationality', value)} placeholder="Search countries…" error={errors.nationality} />
                 </Field>
                 <LanguagePicker value={profile.languages} onChange={(value) => update('languages', value)} error={errors.languages} />
               </div>
             )}
-            {step === 2 && (
+            {step === 3 && (
               <div className="fields-grid">
                 <Field name="university" label="University" error={errors.university} hint="Starting with the Vancouver campus.">
                   <select {...inputProps('university', true)}><option value={UNIVERSITY}>{UNIVERSITY}</option></select>
@@ -297,16 +320,16 @@ export default function CreateProfile({ onComplete, onExit, initialProfile, mode
                 </Field>
               </div>
             )}
-            {step === 3 && (
+            {step === 4 && (
               <div className="interest-fields">
                 <InterestGroup title="Hobbies" description="How do you like to spend your free time?" options={HOBBIES} selected={profile.hobbies} onChange={(value) => update('hobbies', value)} />
                 <InterestGroup title="Sports" description="Playing, watching, or trying something new." options={SPORTS} selected={profile.sports} onChange={(value) => update('sports', value)} />
               </div>
             )}
-            {step === 4 && (
+            {step === 5 && (
               <SocialMediaPicker selected={profile.socialMedia} onChange={(value) => update('socialMedia', value)} />
             )}
-            {step === 5 && (
+            {step === 6 && (
               <div className="fields-grid">
                 <Field name="password" label="Password" error={errors.password} hint="Choose a password with at least 8 characters.">
                   <div className="password-input"><input {...inputProps('password', true)} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} maxLength={128} placeholder="Create a password" /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? 'Hide' : 'Show'}</button></div>
@@ -320,17 +343,17 @@ export default function CreateProfile({ onComplete, onExit, initialProfile, mode
             <button type="button" className="back-button" onClick={goBack} disabled={submitting}><span aria-hidden="true">&#8592;</span> {isEditing && step === 0 ? 'Cancel' : 'Back'}</button>
             <button type="submit" className="continue-button" disabled={submitting}>{submitting ? 'Creating profile…' : isEditing ? 'Save changes' : step === steps.length - 1 ? 'Create profile' : 'Continue'}{!submitting && <ArrowIcon />}</button>
           </div>
-          {!isEditing && step === 3 && <button type="button" className="skip-button" onClick={() => {
+          {!isEditing && step === 4 && <button type="button" className="skip-button" onClick={() => {
             setProfile((previous) => ({ ...previous, hobbies: [], sports: [] }))
             setErrors({})
             setServerError('')
-            setStep(4)
+            setStep(5)
           }}>Skip for now</button>}
-          {!isEditing && step === 4 && <button type="button" className="skip-button" onClick={() => {
+          {!isEditing && step === 5 && <button type="button" className="skip-button" onClick={() => {
             update('socialMedia', [])
             setErrors({})
             setServerError('')
-            setStep(5)
+            setStep(6)
           }}>Skip for now</button>}
         </form>
       </section>

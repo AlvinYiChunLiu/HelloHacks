@@ -719,3 +719,53 @@
   .step-list li { flex: 1; min-width: 0; font-size: 9px; }
   .edit-section-button { text-align: center; }
 }
+
+.gender-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.gender-picker legend {
+  margin-bottom: 9px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.gender-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 8px;
+}
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.gender-option:hover, .gender-option.is-selected {
+  border-color: var(--primary);
+}
+.gender-option:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.gender-option input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+@media (max-width: 800px) {
+  .step-list { flex-wrap: wrap; justify-content: flex-start; }
+  .step-list li { flex: 1 0 70px; }
+}
+@media (max-width: 400px) {
+  .gender-options { grid-template-columns: 1fr; }
+}

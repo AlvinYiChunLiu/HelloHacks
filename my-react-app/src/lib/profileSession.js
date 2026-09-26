@@ -1,3 +1,5 @@
+import { normalizeAvatar } from './avatar.js'
+
 const PROFILE_SESSION_KEY = 'interbuddies.active-profile'
 const LEGACY_DEV_SESSION_KEY = 'interbuddies.dev-preview'
 const DEFAULT_COLOR = '#2457d6'
@@ -8,6 +10,8 @@ export const DEV_PROFILE = {
   name: 'Dev',
   username: 'dev',
   birthday: '2004-04-15',
+  gender: 'prefer-not-to',
+  avatar: null,
   nationality: 'CA',
   university: 'University of British Columbia',
   residence: 'Totem Park',
@@ -44,6 +48,8 @@ export function normalizeProfile(profile) {
     name: text(source.name, 80),
     username: text(source.username, 24),
     birthday: text(source.birthday, 10),
+    gender: ['male', 'female', 'prefer-not-to'].includes(source.gender) ? source.gender : 'prefer-not-to',
+    avatar: normalizeAvatar(source.avatar),
     nationality: text(source.nationality, 2),
     university: text(source.university, 160),
     residence: text(source.residence, 160),

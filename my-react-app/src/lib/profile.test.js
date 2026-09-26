@@ -28,6 +28,7 @@ function validProfile(overrides = {}) {
     ...emptyProfile(),
     favoriteColor: DEFAULT_PROFILE_COLOR,
     languages: ['English', 'French'],
+    gender: 'prefer-not-to',
     name: 'Alex Taylor',
     username: 'alex_taylor',
     birthday: '2005-09-26',
@@ -102,12 +103,12 @@ test('new profiles have UBC selected and independent empty interest arrays', () 
 })
 
 test('a complete profile passes every step and interests can be skipped', () => {
-  for (const step of [0, 1, 2, 3, 4, 5]) assert.deepEqual(errorsFor(step, {}), {})
-  assert.deepEqual(validateStep(3, emptyProfile(), options, today), {})
+  for (const step of [0, 1, 2, 3, 4, 5, 6]) assert.deepEqual(errorsFor(step, {}), {})
+  assert.deepEqual(validateStep(4, emptyProfile(), options, today), {})
 })
 
 test('about-you step reports each missing field without validating later steps', () => {
-  assert.deepEqual(Object.keys(validateStep(1, emptyProfile(), options, today)).sort(), ['birthday', 'languages', 'name', 'nationality', 'username'])
+  assert.deepEqual(Object.keys(validateStep(1, emptyProfile(), options, today)).sort(), ['birthday', 'gender', 'name', 'username'])
   assert.deepEqual(errorsFor(1, { email: '', password: '', residence: '', major: '', year: '' }), {})
   assert.ok(errorsFor(1, { name: '   ' }).name)
   assert.ok(errorsFor(1, { name: 'a'.repeat(81) }).name)
@@ -124,31 +125,31 @@ test('usernames support the stated characters and length after surrounding white
 })
 
 test('nationality must match a country code and birthday errors use the supplied current date', () => {
-  assert.deepEqual(errorsFor(1, { nationality: 'JP' }), {})
+  assert.deepEqual(errorsFor(2, { nationality: 'JP' }), {})
   for (const nationality of ['', 'Canada', 'ca', 'ZZ']) {
-    assert.ok(errorsFor(1, { nationality }).nationality, nationality)
+    assert.ok(errorsFor(2, { nationality }).nationality, nationality)
   }
   assert.ok(errorsFor(1, { birthday: '2026-09-27' }).birthday)
   assert.ok(errorsFor(1, { birthday: '2005-02-29' }).birthday)
 })
 
 test('campus details require the supported university and listed residence and major values', () => {
-  assert.ok(errorsFor(2, { university: 'Another university' }).university)
+  assert.ok(errorsFor(3, { university: 'Another university' }).university)
   for (const residence of ['', 'Made-up residence', 'totem park']) {
-    assert.ok(errorsFor(2, { residence }).residence, residence)
+    assert.ok(errorsFor(3, { residence }).residence, residence)
   }
   for (const major of ['', 'Made-up major', 'computer science']) {
-    assert.ok(errorsFor(2, { major }).major, major)
+    assert.ok(errorsFor(3, { major }).major, major)
   }
-  assert.deepEqual(errorsFor(2, { residence: 'Off campus / commuting', major: 'Undeclared / exploring majors' }), {})
+  assert.deepEqual(errorsFor(3, { residence: 'Off campus / commuting', major: 'Undeclared / exploring majors' }), {})
 })
 
 test('years 1 through 6 are accepted and fractional, padded, and out-of-range values are rejected', () => {
   for (const year of ['1', '2', '3', '4', '5', '6', 1, 6]) {
-    assert.deepEqual(errorsFor(2, { year }), {}, String(year))
+    assert.deepEqual(errorsFor(3, { year }), {}, String(year))
   }
   for (const year of ['', '0', '7', '-1', '1.5', '01', ' 1 ', '1st', null]) {
-    assert.ok(errorsFor(2, { year }).year, String(year))
+    assert.ok(errorsFor(3, { year }).year, String(year))
   }
 })
 
@@ -156,24 +157,25 @@ test('registration keeps the current username-derived email contract without a v
   const profile = validProfile({ username: '  Alex_Taylor  ' })
   assert.equal(registrationPayload(profile).email, 'alex_taylor@accounts.interbuddies.invalid')
   assert.equal(Object.hasOwn(emptyProfile(), 'email'), false)
-  assert.deepEqual(errorsFor(5, {}), {})
+  assert.deepEqual(errorsFor(6, {}), {})
 })
 
 test('password validation enforces the 8-128 character boundaries', () => {
-  assert.deepEqual(errorsFor(5, { password: 'a'.repeat(8) }), {})
-  assert.deepEqual(errorsFor(5, { password: 'a'.repeat(128) }), {})
-  assert.ok(errorsFor(5, { password: 'a'.repeat(7) }).password)
-  assert.ok(errorsFor(5, { password: 'a'.repeat(129) }).password)
-  assert.ok(errorsFor(5, { password: '' }).password)
+  assert.deepEqual(errorsFor(6, { password: 'a'.repeat(8) }), {})
+  assert.deepEqual(errorsFor(6, { password: 'a'.repeat(128) }), {})
+  assert.ok(errorsFor(6, { password: 'a'.repeat(7) }).password)
+  assert.ok(errorsFor(6, { password: 'a'.repeat(129) }).password)
+  assert.ok(errorsFor(6, { password: '' }).password)
 })
 
-test('server field errors return users to the corresponding six-step profile section', () => {
+test('server field errors return users to the corresponding seven-step profile section', () => {
   assert.equal(stepForField('favoriteColor'), 0)
-  for (const field of ['name', 'username', 'birthday', 'nationality', 'languages']) assert.equal(stepForField(field), 1, field)
-  for (const field of ['university', 'residence', 'year', 'major']) assert.equal(stepForField(field), 2, field)
-  for (const field of ['hobbies', 'sports']) assert.equal(stepForField(field), 3, field)
-  assert.equal(stepForField('socialMedia'), 4)
-  for (const field of ['email', 'password', 'unknown']) assert.equal(stepForField(field), 5, field)
+  for (const field of ['name', 'username', 'birthday', 'avatar', 'gender']) assert.equal(stepForField(field), 1, field)
+  for (const field of ['nationality', 'languages']) assert.equal(stepForField(field), 2, field)
+  for (const field of ['university', 'residence', 'year', 'major']) assert.equal(stepForField(field), 3, field)
+  for (const field of ['hobbies', 'sports']) assert.equal(stepForField(field), 4, field)
+  assert.equal(stepForField('socialMedia'), 5)
+  for (const field of ['email', 'password', 'unknown']) assert.equal(stepForField(field), 6, field)
 })
 
 test('registration normalizes identity fields and numeric year while preserving the exact password and source profile', () => {
@@ -191,6 +193,8 @@ test('registration normalizes identity fields and numeric year while preserving 
   const expected = { ...original }
   delete expected.favoriteColor
   delete expected.languages
+  delete expected.gender
+  delete expected.avatar
   assert.deepEqual(payload, {
     ...expected,
     name: 'Alex Taylor',
@@ -221,14 +225,16 @@ test('languages include a broad sorted list and require at least one listed sele
   assert.ok(LANGUAGES.length > 100)
   assert.equal(new Set(LANGUAGES).size, LANGUAGES.length)
   assert.deepEqual(LANGUAGES, [...LANGUAGES].sort((a, b) => a.localeCompare(b, 'en')))
-  assert.deepEqual(errorsFor(1, { languages: ['English', 'Portuguese', 'Mandarin'] }), {})
-  for (const languages of [[], undefined, ['Unlisted'], 'English']) assert.ok(errorsFor(1, { languages }).languages)
+  assert.deepEqual(errorsFor(2, { languages: ['English', 'Portuguese', 'Mandarin'] }), {})
+  for (const languages of [[], undefined, ['Unlisted'], 'English']) assert.ok(errorsFor(2, { languages }).languages)
 })
 
-test('registration keeps local color and language additions out of the unchanged API payload', () => {
+test('registration keeps all local profile additions out of the unchanged API payload', () => {
   const payload = registrationPayload(validProfile())
   assert.equal(Object.hasOwn(payload, 'favoriteColor'), false)
   assert.equal(Object.hasOwn(payload, 'languages'), false)
+  assert.equal(Object.hasOwn(payload, 'gender'), false)
+  assert.equal(Object.hasOwn(payload, 'avatar'), false)
   assert.equal(payload.password, 'Good password 123!')
 })
 
@@ -237,7 +243,7 @@ test('edit drafts prefill public fields and make independent arrays without reta
   const draft = profileDraft(original)
   assert.equal(draft.password, '')
   assert.equal(draft.year, '2')
-  for (let step = 0; step < 5; step += 1) assert.deepEqual(validateStep(step, draft, options, today), {})
+  for (let step = 0; step < 6; step += 1) assert.deepEqual(validateStep(step, draft, options, today), {})
   draft.languages.push('Spanish')
   draft.socialMedia[0].username = 'new_name'
   assert.deepEqual(original.languages, ['English', 'French'])
@@ -256,4 +262,37 @@ test('local edits retain all public details, normalize names, and omit password 
   assert.deepEqual(saved.socialMedia, [{ platform: 'Instagram', username: 'alex' }])
   for (const key of ['password', 'id', 'email']) assert.equal(Object.hasOwn(saved, key), false)
   assert.equal(original.socialMedia[0].username, '  alex  ')
+})
+
+test('nationality and language choices are required in their own section only', () => {
+  const profile = validProfile({ nationality: '', languages: [] })
+  assert.deepEqual(validateStep(1, profile, options, today), {})
+  assert.deepEqual(Object.keys(validateStep(2, profile, options, today)).sort(), ['languages', 'nationality'])
+  assert.deepEqual(errorsFor(2, { name: '', username: '', birthday: '', gender: '' }), {})
+})
+
+test('gender requires one of three choices and old edit drafts keep it private', () => {
+  assert.equal(emptyProfile().gender, '')
+  for (const gender of ['male', 'female', 'prefer-not-to']) assert.deepEqual(errorsFor(1, { gender }), {})
+  for (const gender of ['', undefined, 'other']) assert.ok(errorsFor(1, { gender }).gender)
+  assert.equal(profileDraft({}).gender, 'prefer-not-to')
+  assert.equal(profileDraft({ gender: 'female' }).gender, 'female')
+  assert.equal(profileChanges(validProfile({ gender: 'male' })).gender, 'male')
+})
+
+test('avatar and social choices survive local editing without changing registration fields', () => {
+  const original = validProfile({
+    avatar: { type: 'smiley', value: 'wink' },
+    socialMedia: [{ platform: 'Instagram', username: ' alex ' }, { platform: 'Discord', username: '' }],
+  })
+  const draft = profileDraft(original)
+  assert.deepEqual(draft.avatar, original.avatar)
+  assert.notEqual(draft.avatar, original.avatar)
+  const changes = profileChanges(draft)
+  assert.deepEqual(changes.avatar, original.avatar)
+  assert.deepEqual(changes.socialMedia, [{ platform: 'Instagram', username: 'alex' }, { platform: 'Discord', username: '' }])
+  assert.deepEqual(registrationPayload(draft).socialMedia, changes.socialMedia)
+  assert.equal(Object.hasOwn(registrationPayload(draft), 'avatar'), false)
+  assert.equal(Object.hasOwn(registrationPayload(draft), 'gender'), false)
+  assert.equal(profileDraft({ avatar: { type: 'photo', value: 'javascript:bad' } }).avatar, null)
 })

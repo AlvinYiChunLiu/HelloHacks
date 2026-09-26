@@ -87,7 +87,7 @@ test('normalization handles malformed lists and colors and bounds stored values'
 
 test('session save and reload retain edits and strip secrets from serialized storage', (t) => {
   const storage = useStorage(t)
-  const edited = { ...DEV_PROFILE, username: 'new_dev', languages: ['Spanish'], favoriteColor: '#ad286a' }
+  const edited = { ...DEV_PROFILE, username: 'new_dev', languages: ['Spanish'], favoriteColor: '#ad286a', gender: 'female', avatar: { type: 'smiley', value: 'wink' } }
   assert.equal(saveActiveProfile({ ...edited, password: 'secret', email: 'private@example.com' }), true)
   assert.deepEqual(readActiveProfile(), edited)
   assert.deepEqual(JSON.parse(storage.get(PROFILE_KEY)), edited)
@@ -149,4 +149,30 @@ test('a storage quota error does not leave a legacy dev flag behind', (t) => {
   assert.equal(saveActiveProfile({ name: 'Alice' }), false)
   assert.equal(storage.has(LEGACY_KEY), false)
   assert.equal(readActiveProfile(), null)
+})
+
+test('gender normalization only preserves explicit supported choices', () => {
+  for (const gender of ['male', 'female', 'prefer-not-to']) {
+    assert.equal(normalizeProfile({ gender }).gender, gender)
+  }
+  for (const gender of ['', 'other', null, [], 42, 'Male']) {
+    assert.equal(normalizeProfile({ gender }).gender, 'prefer-not-to')
+  }
+})
+
+test('normalization clones valid avatars and discards malformed values', () => {
+  const source = { avatar: { type: 'smiley', value: 'smile', password: 'secret' } }
+  const profile = normalizeProfile(source)
+  assert.deepEqual(profile.avatar, { type: 'smiley', value: 'smile' })
+  profile.avatar.value = 'wink'
+  assert.equal(source.avatar.value, 'smile')
+  assert.equal(normalizeProfile({ avatar: { type: 'photo', value: 'https://example.com/pic.png' } }).avatar, null)
+})
+
+test('removing a saved picture and hiding gender remain saved after reload', (t) => {
+  useStorage(t)
+  saveActiveProfile({ ...DEV_PROFILE, gender: 'male', avatar: { type: 'smiley', value: 'grin' } })
+  saveActiveProfile({ ...readActiveProfile(), gender: 'prefer-not-to', avatar: null })
+  assert.equal(readActiveProfile().gender, 'prefer-not-to')
+  assert.equal(readActiveProfile().avatar, null)
 })

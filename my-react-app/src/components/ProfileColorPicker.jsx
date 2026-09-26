@@ -8,10 +8,10 @@ export default function ProfileColorPicker({ value, onChange, error }) {
     <fieldset className="profile-color-picker" aria-describedby={error ? 'favoriteColor-error' : 'favoriteColor-hint'}>
       <legend className="sr-only">Favorite color</legend>
       <div className="color-profile-preview">
-        <div className="color-preview-avatar" style={{ borderColor: selected?.value || '#d6dce7' }} aria-hidden="true">
+        <div className="color-preview-avatar" style={{ borderColor: selected?.value || '#d4d4d4' }} aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </div>
-        <div><strong aria-live="polite">{selected ? `${selected.name} looks like you.` : 'A little color, a little you.'}</strong><p id="favoriteColor-hint">Your favorite color will frame your profile picture.</p></div>
+        <div><strong aria-live="polite">{selected ? `${selected.name} looks like you.` : 'A little color, a little you.'}</strong><p id="favoriteColor-hint">Your choice colors your pages and frames your profile picture.</p></div>
       </div>
       <div className="profile-color-grid">
         {PROFILE_COLORS.map(({ name, value: color }) => (

@@ -34,6 +34,7 @@ export const SAMPLE_BUDDIES = examples.map(([
   username: `sample_${name.toLowerCase().replaceAll(' ', '_')}`,
   nationality,
   birthday,
+  gender: ['female', 'male', 'prefer-not-to'][index % 3],
   university: UNIVERSITY,
   residence,
   year,
@@ -41,7 +42,7 @@ export const SAMPLE_BUDDIES = examples.map(([
   hobbies,
   sports,
   languages,
-  socialMedia: [...new Set([SOCIAL_PLATFORMS[index % SOCIAL_PLATFORMS.length], SOCIAL_PLATFORMS[(index * 3 + 2) % SOCIAL_PLATFORMS.length]])].map((platform) => ({ platform, username: '' })),
+  socialMedia: [...new Set([SOCIAL_PLATFORMS[index % SOCIAL_PLATFORMS.length], SOCIAL_PLATFORMS[(index * 3 + 2) % SOCIAL_PLATFORMS.length]])].map((platform) => ({ platform, username: `sample_${name.toLowerCase().replaceAll(' ', '_')}` })),
   favoriteColor,
   bio,
 }))

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowIcon, BuddyMark, CloseIcon, EditIcon } from '../components/Icons'
 import ProfileAvatar from '../components/ProfileAvatar'
+import ProfileSocials from '../components/ProfileSocials'
 import CountryFlag from '../components/CountryFlag'
 import countries from '../data/countries.json'
 import { SOCIAL_PLATFORMS } from '../data/socialPlatforms'
@@ -13,6 +14,7 @@ import './MainPage.css'
 
 const countryName = (code) => countries.find((country) => country.code === code)?.name || 'Not selected'
 const yearName = (year) => ({ 1: '1st year', 2: '2nd year', 3: '3rd year', 4: '4th year', 5: '5th year', 6: '6th year' })[year] || 'Year not selected'
+const genderName = (gender) => ({ male: 'Male', female: 'Female' })[gender]
 
 function CategoryIcon({ category }) {
   return category === 'sports' ? (
@@ -36,9 +38,11 @@ function BuddyCard({ buddy, category, onView, showScore = false }) {
         <CountryFlag code={buddy.nationality} />
       </div>
       <p className="buddy-major">{buddy.major}</p>
+      {genderName(buddy.gender) && <p className="buddy-gender">{genderName(buddy.gender)}</p>}
       <p className="buddy-campus">{yearName(buddy.year)} <span aria-hidden="true">&middot;</span> {buddy.residence}</p>
       {showScore && <p className="buddy-common-count">{buddy.commonCount} {buddy.commonCount === 1 ? 'detail' : 'details'} in common</p>}
       <Tags values={shared.slice(0, 2)} className="shared-tags" />
+      <ProfileSocials accounts={buddy.socialMedia} compact />
       <button className="view-buddy" onClick={() => onView(buddy)}>View profile <ArrowIcon /></button>
     </article>
   )
@@ -48,10 +52,10 @@ function BuddyColumn({ title, category, description, matches, profile, onView })
   const [expanded, setExpanded] = useState(false)
   const visible = expanded ? matches : matches.slice(0, 3)
   const emptyMessage = category === 'nationality'
-    ? `No sample buddies from ${countryName(profile.nationality)} yet.`
+    ? `No buddies from ${countryName(profile.nationality)} yet.`
     : !profile[category]?.length
       ? `Add ${category} to your profile to see what you have in common.`
-      : `No sample buddies share your ${category} yet.`
+      : `No buddies share your ${category} yet.`
   return (
     <section className={`buddy-column buddy-column--${category}`} aria-labelledby={`${category}-title`}>
       <header className="buddy-column-header">
@@ -70,9 +74,10 @@ function BuddyColumn({ title, category, description, matches, profile, onView })
 
 function MultiFilterGroup({ title, options, selected, onChange }) {
   const [query, setQuery] = useState('')
+  const [expanded, setExpanded] = useState(selected.length > 0)
   const filtered = options.filter((option) => option.toLocaleLowerCase('en').includes(query.trim().toLocaleLowerCase('en')))
   return (
-    <details className="buddy-filter-group" defaultOpen={selected.length > 0}>
+    <details className="buddy-filter-group" open={expanded} onToggle={(event) => setExpanded(event.currentTarget.open)}>
       <summary><span>{title}</span><span>{selected.length ? `${selected.length} selected` : 'Any'}</span></summary>
       <div className="buddy-filter-options-panel">
         {options.length > 8 && <input type="search" aria-label={`Search ${title.toLowerCase()}`} placeholder={`Search ${title.toLowerCase()}…`} value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault() }} />}
@@ -148,12 +153,12 @@ function BuddyResults({ matches, filters, onEditFilters, onClearFilters, onView 
     <section className="buddy-filter-results" aria-labelledby="filtered-buddies-title">
       <div className="discovery-heading">
         <div><h2 id="filtered-buddies-title">Matching buddies</h2><p>Ranked by how many profile details you have in common.</p></div>
-        <span className="sample-badge">{matches.length} sample {matches.length === 1 ? 'profile' : 'profiles'}</span>
+        <span className="sample-badge">{matches.length} {matches.length === 1 ? 'profile' : 'profiles'}</span>
       </div>
       {selected.length > 0 && <div className="buddy-filter-summary"><span>Filters</span><Tags values={selected} /></div>}
       <div className="buddy-results-grid">
         {matches.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category="filtered" onView={onView} showScore />)}
-        {!matches.length && <div className="buddy-filter-empty"><h3>No profiles match those filters yet.</h3><p>Try removing a filter to see more sample buddies.</p></div>}
+        {!matches.length && <div className="buddy-filter-empty"><h3>No profiles match those filters yet.</h3><p>Try removing a filter to see more buddies.</p></div>}
       </div>
       <div className="buddy-results-actions"><button className="dashboard-secondary" onClick={onClearFilters}>Clear filters</button><button className="filter-edit-button" onClick={onEditFilters}>Change filters</button></div>
     </section>
@@ -181,12 +186,13 @@ function ProfilePanel({ profile, onEdit }) {
           <div><dt>Year</dt><dd>{yearName(profile.year)}</dd></div>
           <div><dt>Major</dt><dd>{profile.major || 'Not selected'}</dd></div>
           <div><dt>Birthday</dt><dd>{birthday}</dd></div>
+          {genderName(profile.gender) && <div><dt>Gender</dt><dd>{genderName(profile.gender)}</dd></div>}
           <div><dt>Languages</dt><dd>{profile.languages?.join(', ') || 'Not added'}</dd></div>
           <div><dt>Profile color</dt><dd className="profile-color-detail"><span style={{ background: profile.favoriteColor }} aria-hidden="true" />{colorName}</dd></div>
         </dl>
       </div>
       <div className="profile-interests"><h3>Sports</h3><Tags values={profile.sports} /><h3>Hobbies</h3><Tags values={profile.hobbies} /></div>
-      {profile.socialMedia?.length > 0 && <div className="profile-socials"><h3>Find me on</h3>{profile.socialMedia.map(({ platform, username }) => <p key={platform}><span>{platform}</span><span>{username ? `@${username.replace(/^@/, '')}` : 'No username added'}</span></p>)}</div>}
+      <ProfileSocials accounts={profile.socialMedia} />
       <p className="profile-session-note">Profile edits are saved for this browser session.</p>
     </aside>
   )
@@ -210,7 +216,8 @@ function BuddyDialog({ buddy, profile, onClose }) {
         <p className="buddy-dialog-handle">@{buddy.username} <span aria-hidden="true">&middot;</span> {getAge(buddy.birthday)} years old</p>
         <div className="profile-country"><CountryFlag code={buddy.nationality} /><span>{countryName(buddy.nationality)}</span></div>
         <p className="buddy-bio">{buddy.bio}</p>
-        <dl className="buddy-dialog-details"><div><dt>Studies</dt><dd>{buddy.major} &middot; {yearName(buddy.year)}</dd></div><div><dt>Residence</dt><dd>{buddy.residence}</dd></div><div><dt>Languages</dt><dd>{buddy.languages.join(', ')}</dd></div></dl>
+        <dl className="buddy-dialog-details"><div><dt>Studies</dt><dd>{buddy.major} &middot; {yearName(buddy.year)}</dd></div><div><dt>Residence</dt><dd>{buddy.residence}</dd></div><div><dt>Languages</dt><dd>{buddy.languages.join(', ')}</dd></div>{genderName(buddy.gender) && <div><dt>Gender</dt><dd>{genderName(buddy.gender)}</dd></div>}</dl>
+        <ProfileSocials accounts={buddy.socialMedia} />
         <div className="buddy-shared"><h3>You have in common</h3><Tags values={[...new Set(shared)]} empty="A new perspective to share." /></div>
         <p className="sample-profile-note">Sample profile for this preview. Messaging is not available yet.</p>
         <div className="buddy-dialog-actions"><button className="dashboard-secondary" onClick={onClose}>Back to buddies</button></div>
@@ -284,7 +291,7 @@ export default function MainPage({ profile, onEdit }) {
           <BuddyResults matches={filteredBuddies} filters={appliedFilters} onEditFilters={findBuddy} onClearFilters={clearFilters} onView={viewBuddy} />
         ) : (
           <section className="buddy-discovery" aria-labelledby="discovery-title">
-            <div className="discovery-heading"><div><h2 id="discovery-title">A few things in common</h2><p>A familiar place, a favorite game, or something you love.</p></div><span className="sample-badge">Sample buddies</span></div>
+            <div className="discovery-heading"><div><h2 id="discovery-title">A few things in common</h2><p>A familiar place, a favorite game, or something you love.</p></div></div>
             <div className="buddy-columns">
               <BuddyColumn title="Nationality" category="nationality" description={`A little closer to ${countryName(profile.nationality)}.`} matches={matches.nationality} profile={profile} onView={viewBuddy} />
               <BuddyColumn title="Sport" category="sports" description="A teammate for your next game." matches={matches.sports} profile={profile} onView={viewBuddy} />

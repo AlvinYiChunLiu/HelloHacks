@@ -1,0 +1,301 @@
+/* The welcome page keeps its original palette. These variables only exist on
+   signup, edit profile, and the signed-in dashboard. */
+.personal-theme {
+  position: relative;
+  isolation: isolate;
+  --primary: var(--theme-text);
+  --red: var(--theme-text);
+  --yellow: var(--theme-text);
+  --green: var(--theme-text);
+  --blue-light: var(--theme-soft);
+  --red-light: var(--theme-soft);
+  --yellow-light: var(--theme-soft);
+  --green-light: var(--theme-soft);
+  --paper: var(--theme-canvas);
+  --line: #e3e3e3;
+  --ink: #252525;
+  --muted: #626262;
+  color: var(--ink);
+}
+
+.personal-theme::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background: var(--theme-canvas);
+  content: '';
+  pointer-events: none;
+  transition: background-color 320ms ease;
+}
+
+.personal-theme ::selection {
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.personal-theme :is(button, a, input, select, textarea, summary):focus-visible {
+  outline-color: var(--theme-focus);
+}
+
+.personal-theme :is(.brand h1, .onboarding-card > h2, .onboarding-intro h2, .dashboard-intro h2, .discovery-heading h2, .column-title-line h3) {
+  color: var(--theme-text);
+}
+
+.personal-theme .brand-mark {
+  color: var(--theme-accent);
+}
+
+.personal-theme .brand-mark rect[stroke] {
+  stroke: var(--theme-text);
+}
+
+.personal-theme .brand-mark path {
+  stroke: var(--theme-on-accent);
+}
+
+.personal-theme :is(.continue-button, .find-buddy-button, .filter-submit) {
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.personal-theme :is(.continue-button, .find-buddy-button, .filter-submit):hover:not(:disabled) {
+  background: var(--theme-hover);
+  color: var(--theme-on-hover);
+}
+
+.personal-theme .find-buddy-button {
+  box-shadow: 0 4px 0 var(--theme-border);
+}
+
+.personal-theme .find-buddy-button > svg:first-child {
+  color: currentColor;
+}
+
+.personal-theme .find-buddy-button > svg:first-child rect[stroke] {
+  stroke: currentColor;
+}
+
+.personal-theme .find-buddy-button > svg:first-child path {
+  stroke: var(--theme-accent);
+}
+
+.personal-theme .find-buddy-button:hover > svg:first-child path {
+  stroke: var(--theme-hover);
+}
+
+.personal-theme .step-list li {
+  --step-color: var(--theme-accent);
+  --step-tint: var(--theme-soft);
+}
+
+.personal-theme .step-list .step-number {
+  border-color: var(--theme-border);
+  background: var(--theme-soft);
+  color: var(--theme-text);
+}
+
+.personal-theme .step-list .is-current .step-number {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.personal-theme .step-progress {
+  background: var(--theme-soft);
+}
+
+.personal-theme .step-progress span {
+  background: var(--theme-accent);
+}
+
+.personal-theme :is(.onboarding-card, .profile-panel, .buddy-dialog) {
+  border-color: var(--theme-border);
+  box-shadow: 0 8px 35px var(--theme-shadow);
+}
+
+.personal-theme :is(.form-field input, .form-field select, .social-username-input input, .select-popover, .language-options, .buddy-filter-select select, .buddy-filter-options-panel > input, .dashboard-secondary) {
+  border-color: #cdcdcd;
+}
+
+.personal-theme :is(.form-field input, .form-field select, .social-username-input input, .buddy-filter-select select):hover {
+  border-color: var(--theme-text);
+}
+
+.personal-theme :is(.form-field input, .social-username-input input)::placeholder {
+  color: #686868;
+}
+
+.personal-theme :is(.age-badge:not(.is-empty), .signup-summary, .selected-languages li, .edit-profile-button, .filter-edit-button, .profile-update-notice) {
+  border-color: var(--theme-border);
+  background: var(--theme-soft);
+  color: var(--theme-text);
+}
+
+.personal-theme .summary-check {
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.personal-theme :is(.select-options li.is-active, .password-input button:hover, .social-username-input button:hover, .language-option:hover, .language-option.is-selected, .selected-languages button:hover, .profile-color-choice:hover, .profile-color-choice.is-selected, .buddy-filter-option:hover, .dashboard-secondary:hover, .buddy-dialog-close) {
+  background: var(--theme-soft);
+  color: var(--theme-text);
+}
+
+.personal-theme :is(.color-profile-preview, .buddy-filter-group) {
+  border-color: var(--theme-border);
+  background: var(--theme-canvas);
+}
+
+.personal-theme :is(.profile-color-choice, .color-preview-avatar, .language-option, .interest-chip, .social-platform-option) {
+  color: var(--muted);
+}
+
+.personal-theme :is(.profile-color-choice.is-selected, .edit-profile-button:hover, .filter-edit-button:hover) {
+  border-color: var(--theme-text);
+}
+
+.personal-theme :is(.interest-chip, .social-platform-option) {
+  --chip-color: var(--theme-text);
+  --chip-tint: var(--theme-soft);
+  border-color: #d5d5d5;
+  background: #fff;
+}
+
+.personal-theme :is(.interest-chip:hover, .social-platform-option:hover, .social-platform-option.is-selected) {
+  border-color: var(--theme-text);
+  background: var(--theme-soft);
+  color: var(--theme-text);
+}
+
+.personal-theme .interest-chip.is-selected {
+  border-color: var(--theme-text);
+  background: var(--theme-accent);
+  color: var(--theme-on-accent);
+}
+
+.personal-theme :is(.interest-chip, .social-platform-option, .language-option, .profile-color-choice):focus-within {
+  outline-color: var(--theme-focus);
+}
+
+.personal-theme :is(.social-platform-option input, .language-option input, .buddy-filter-option input) {
+  accent-color: var(--theme-text);
+}
+
+.personal-theme .buddy-column {
+  --category-color: var(--theme-text);
+  --category-tint: var(--theme-soft);
+  border-color: var(--theme-border);
+  background: var(--theme-canvas);
+}
+
+.personal-theme :is(.buddy-major, .profile-country, .profile-details dd, .profile-socials p > span:last-child, .buddy-bio, .buddy-filter-select, .buddy-filter-group summary, .buddy-filter-option, .dashboard-secondary) {
+  color: #484848;
+}
+
+.personal-theme :is(.sample-badge, .sample-profile-note, .dashboard-tags > span) {
+  border-color: #dedede;
+  background: #f2f2f2;
+  color: #5a5a5a;
+}
+
+.personal-theme :is(.shared-tags > span, .buddy-shared .dashboard-tags > span, .buddy-filter-summary .dashboard-tags > span) {
+  background: var(--theme-soft);
+  color: var(--theme-text);
+}
+
+.personal-theme .buddy-card {
+  border-color: #e3e3e3;
+  box-shadow: 0 2px 5px #00000005;
+}
+
+.personal-theme .view-buddy {
+  border-color: #ededed;
+}
+
+.personal-theme :is(.buddy-empty, .buddy-filter-empty) {
+  border-color: var(--theme-border);
+}
+
+.personal-theme .buddy-dialog::backdrop {
+  background: #17171766;
+}
+
+.personal-theme.theme-unselected :is(.field-error, .form-error) {
+  color: #424242;
+}
+
+.personal-theme.theme-unselected .form-error {
+  border-color: #bdbdbd;
+  background: #f0f0f0;
+}
+
+.personal-theme.theme-unselected :is(input, select)[aria-invalid='true'] {
+  border-color: #555;
+}
+
+/* Motion is brief and tied to an action; nothing continuously moves. */
+@keyframes page-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dialog-arrive {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .personal-theme :is(.onboarding-card, .step-fields, .dashboard-intro, .profile-update-notice) {
+    animation: page-arrive 280ms ease-out both;
+  }
+
+  .personal-theme .buddy-column {
+    animation: page-arrive 320ms ease-out both;
+  }
+
+  .personal-theme .buddy-column:nth-child(2) { animation-delay: 45ms; }
+  .personal-theme .buddy-column:nth-child(3) { animation-delay: 90ms; }
+
+  .personal-theme .buddy-dialog[open] {
+    animation: dialog-arrive 200ms ease-out both;
+  }
+
+  .personal-theme :is(.buddy-card, .profile-color-choice, .interest-chip, .continue-button, .filter-submit, .edit-profile-button, .filter-edit-button) {
+    transition: background-color 200ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .personal-theme :is(.step-number, .step-progress span, .brand-mark, .brand h1, .color-profile-preview, .onboarding-card, .buddy-column, .profile-panel) {
+    transition: background-color 300ms ease, color 200ms ease, border-color 250ms ease, box-shadow 250ms ease;
+  }
+
+  .personal-theme .step-progress span {
+    transition: width 240ms ease, background-color 300ms ease;
+  }
+
+  .personal-theme :is(.continue-button, .filter-submit, .edit-profile-button, .filter-edit-button):hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .personal-theme :is(.continue-button, .find-buddy-button, .filter-submit):active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  @media (hover: hover) {
+    .personal-theme .buddy-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 18px var(--theme-shadow);
+    }
+
+    .personal-theme .profile-color-choice:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
