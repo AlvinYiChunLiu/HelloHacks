@@ -22,23 +22,119 @@ const db = new sqlite3.Database(databasePath, async (error) => {
 
   console.log(`SQLite connected: ${databasePath}`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
-    birthday TEXT NOT NULL,
-    nationality TEXT NOT NULL,
-    university TEXT NOT NULL,
-    residence TEXT NOT NULL,
-    year INTEGER NOT NULL CHECK (year BETWEEN 1 AND 6),
-    major TEXT NOT NULL,
-    hobbies TEXT NOT NULL DEFAULT '[]',
-    sports TEXT NOT NULL DEFAULT '[]',
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )`);
+  try {
+    await ensureUsersTable();
+  } catch (databaseError) {
+    console.error('Database setup failed:', databaseError.message);
+    process.exit(1);
+  }
 });
+
+function ensureUsersTable() {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        username TEXT NOT NULL UNIQUE,
+        birthday TEXT NOT NULL,
+        nationality TEXT NOT NULL,
+        university TEXT NOT NULL,
+        residence TEXT NOT NULL,
+        year INTEGER NOT NULL CHECK (year BETWEEN 1 AND 6),
+        major TEXT NOT NULL,
+        hobbies TEXT NOT NULL DEFAULT '[]',
+        sports TEXT NOT NULL DEFAULT '[]',
+        languages TEXT NOT NULL DEFAULT '[]',
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        social_media TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )`, (createError) => {
+        if (createError) {
+          reject(createError);
+          return;
+        }
+
+        db.all('PRAGMA table_info(users)', (pragmaError, columns) => {
+          if (pragmaError) {
+            reject(pragmaError);
+            return;
+          }
+
+          const available = new Set((columns || []).map((column) => column.name));
+          const missingColumns = [];
+
+          if (!available.has('languages')) {
+            missingColumns.push("ALTER TABLE users ADD COLUMN languages TEXT NOT NULL DEFAULT '[]'");
+          }
+          if (!available.has('social_media')) {
+            missingColumns.push("ALTER TABLE users ADD COLUMN social_media TEXT NOT NULL DEFAULT '[]'");
+          }
+
+          const finishSetup = () => {
+            db.run("UPDATE users SET hobbies = '[]' WHERE hobbies IS NULL OR hobbies = ''", (hobbiesError) => {
+              if (hobbiesError) {
+                reject(hobbiesError);
+                return;
+              }
+
+              db.run("UPDATE users SET sports = '[]' WHERE sports IS NULL OR sports = ''", (sportsError) => {
+                if (sportsError) {
+                  reject(sportsError);
+                  return;
+                }
+
+                db.run("UPDATE users SET languages = '[]' WHERE languages IS NULL OR languages = ''", (languageError) => {
+                  if (languageError) {
+                    reject(languageError);
+                    return;
+                  }
+
+                  db.run("UPDATE users SET social_media = '[]' WHERE social_media IS NULL OR social_media = ''", (socialError) => {
+                    if (socialError) {
+                      reject(socialError);
+                      return;
+                    }
+
+                    resolve();
+                  });
+                });
+              });
+            });
+          };
+
+          if (missingColumns.length === 0) {
+            finishSetup();
+            return;
+          }
+
+          const statement = missingColumns.shift();
+          db.run(statement, (alterError) => {
+            if (alterError) {
+              reject(alterError);
+              return;
+            }
+
+            if (missingColumns.length === 0) {
+              finishSetup();
+              return;
+            }
+
+            const nextStatement = missingColumns.shift();
+            db.run(nextStatement, (nextAlterError) => {
+              if (nextAlterError) {
+                reject(nextAlterError);
+                return;
+              }
+              finishSetup();
+            });
+          });
+        });
+      });
+    });
+  });
+}
 
 app.use(cors());
 app.use(express.json({ limit: '16kb' }));
@@ -72,9 +168,70 @@ app.get('/api/users', (req, res) => {
       ...row,
       hobbies: readJsonArray(row.hobbies),
       sports: readJsonArray(row.sports),
+      languages: readJsonArray(row.languages ?? '[]'),
+      socialMedia: readJsonArray(row.social_media ?? '[]'),
     }));
 
     return res.json(normalized);
+  });
+});
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body || {};
+
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+
+  const trimmedUsername = username.trim().toLowerCase();
+  if (!trimmedUsername || !password) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+
+  db.get('SELECT * FROM users WHERE username = ?', [trimmedUsername], async (error, row) => {
+    if (error) {
+      return res.status(500).json({ error: 'Unable to sign in.' });
+    }
+
+    if (!row) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    const [scheme, N, r, p, salt, hashHex] = String(row.password_hash).split('$');
+    if (scheme !== 'scrypt') {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    try {
+      const derivedKey = await scryptAsync(password, salt, 64, { N: Number(N), r: Number(r), p: Number(p), maxmem: 256 * 1024 * 1024 });
+      const expectedHash = derivedKey.toString('hex');
+
+      if (expectedHash !== hashHex) {
+        return res.status(401).json({ error: 'Invalid username or password.' });
+      }
+
+      return res.json({
+        user: {
+          id: row.id,
+          name: row.name,
+          username: row.username,
+          birthday: row.birthday,
+          nationality: row.nationality,
+          university: row.university,
+          residence: row.residence,
+          year: row.year,
+          major: row.major,
+          hobbies: readJsonArray(row.hobbies),
+          sports: readJsonArray(row.sports),
+          languages: readJsonArray(row.languages ?? '[]'),
+          socialMedia: readJsonArray(row.social_media ?? '[]'),
+          favoriteColor: '#2457d6',
+          gender: 'prefer-not-to',
+        },
+      });
+    } catch {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
   });
 });
 
@@ -103,6 +260,8 @@ app.post('/api/users', async (req, res) => {
   const year = Number(body.year);
   const hobbies = Array.isArray(body.hobbies) ? body.hobbies : [];
   const sports = Array.isArray(body.sports) ? body.sports : [];
+  const languages = Array.isArray(body.languages) ? body.languages : [];
+  const socialMedia = Array.isArray(body.socialMedia) ? body.socialMedia : [];
   const password = String(body.password);
 
   if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
@@ -131,8 +290,8 @@ app.post('/api/users', async (req, res) => {
   const passwordHash = `scrypt$${SCRYPT_OPTIONS.N}$${SCRYPT_OPTIONS.r}$${SCRYPT_OPTIONS.p}$${salt}$${derivedKey.toString('hex')}`;
 
   const insertSql = `INSERT INTO users (
-    name, username, birthday, nationality, university, residence, year, major, hobbies, sports, email, password_hash
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    name, username, birthday, nationality, university, residence, year, major, hobbies, sports, languages, email, password_hash, social_media
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const values = [
     name,
@@ -145,8 +304,10 @@ app.post('/api/users', async (req, res) => {
     major,
     JSON.stringify(hobbies),
     JSON.stringify(sports),
+    JSON.stringify(languages),
     email,
     passwordHash,
+    JSON.stringify(socialMedia),
   ];
 
   db.run(insertSql, values, function (error) {
@@ -175,6 +336,8 @@ app.post('/api/users', async (req, res) => {
         major,
         hobbies,
         sports,
+        languages,
+        socialMedia,
         email,
       },
     });
