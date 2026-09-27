@@ -85,13 +85,8 @@
 .personal-theme .buddy-filter-actions { position: sticky; bottom: -32px; padding-block: 18px; background: #fff; z-index: 1; }
 .personal-theme .buddy-filter-content .eyebrow { margin-left: 0; }
 .buddy-all-interests { margin-top: 22px; text-align: left; }
-.buddy-all-interests h3, .icebreaker h3 { margin: 0 0 10px; font-size: 12px; font-weight: 650; }
+.buddy-all-interests h3 { margin: 0 0 10px; font-size: 12px; font-weight: 650; }
 .buddy-all-interests .dashboard-tags > span { font-size: 11px; }
-.icebreaker { padding: 18px; margin-top: 24px; border: 1px solid var(--theme-border); border-radius: 13px; background: var(--theme-canvas); text-align: left; }
-.icebreaker > div { display: flex; align-items: center; gap: 7px; }
-.icebreaker h3 { margin: 0; color: var(--theme-text); }
-.icebreaker > div svg { width: 17px; height: 17px; color: var(--theme-text); }
-.icebreaker p { margin: 10px 0; font-size: 13px; line-height: 1.75; color: var(--ink); user-select: text; }
 .social-handle-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .social-platform-handle { user-select: text; }
 .copy-action { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; }

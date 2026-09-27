@@ -206,9 +206,6 @@
 .workspace-nav > button.is-active { background: #edf3ff; color: #2457d6; font-weight: 650; }
 .workspace-nav svg { flex: 0 0 auto; width: 17px; height: 17px; }
 .workspace-nav-count { display: grid; place-items: center; min-width: 22px; height: 22px; margin-left: auto; padding: 0 5px; border-radius: 7px; background: #f0f3f8; color: #53627a; font-size: 9px; }
-.workspace-sidebar-note { display: flex; align-items: center; gap: 9px; margin: 32px 4px 0; padding: 11px 9px; border-radius: 11px; background: #fff9e9; color: #775516; }
-.workspace-sidebar-note > span { font-size: 18px; }
-.workspace-sidebar-note p { margin: 0; font-size: 9px; line-height: 1.5; }
 .workspace-content { min-width: 0; }
 .workspace-page { min-width: 0; animation: workspacePageIn 230ms ease both; }
 @keyframes workspacePageIn { from { opacity: .5; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -271,7 +268,6 @@
   .workspace-sidebar-label { margin: 0 0 7px 5px; }
   .workspace-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .workspace-nav > button { justify-content: center; gap: 7px; }
-  .workspace-sidebar-note { display: none; }
   .campus-map-layout { grid-template-columns: minmax(0, 1fr) 255px; gap: 12px; }
 }
 @media (max-width: 800px) {

@@ -3,9 +3,8 @@ import { ArrowIcon, BuddyMark, CloseIcon, EditIcon } from '../components/Icons'
 import ProfileAvatar from '../components/ProfileAvatar'
 import ProfileSocials from '../components/ProfileSocials'
 import CountryFlag from '../components/CountryFlag'
-import CopyButton from '../components/CopyButton'
 import { BookmarkIcon, SearchIcon, FilterIcon, SparkIcon } from '../components/DiscoveryIcons'
-import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, savedBuddiesStorageKey, SAVED_BUDDIES_EVENT } from '../lib/discovery'
+import { activeFilterChoices, readSavedBuddies, removeFilterChoice, saveBuddies, savedBuddiesStorageKey, SAVED_BUDDIES_EVENT } from '../lib/discovery'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
 import { LANGUAGES, PROFILE_COLORS } from '../data/profileOptions'
@@ -279,7 +278,6 @@ function BuddyDialog({ buddy, profile, onClose, saved, onSave }) {
         <div className="buddy-all-interests"><h3>Outside the classroom</h3><Tags values={[...buddy.sports, ...buddy.hobbies]} /></div>
         <ProfileSocials accounts={buddy.socialMedia} />
         <div className="buddy-shared"><h3>You have in common</h3><Tags values={[...new Set(shared)]} empty="A new perspective to share." /></div>
-        <div className="icebreaker"><div><SparkIcon /><h3>Break the ice</h3></div><p>{conversationStarter(profile, buddy)}</p><CopyButton text={conversationStarter(profile, buddy)} label="Copy conversation starter" /></div>
         <p className="sample-profile-note">Sample profile for this preview. Messaging is not available yet.</p>
         <div className="buddy-dialog-actions"><SaveBuddyButton buddy={buddy} saved={saved} onSave={onSave} full /><button className="dashboard-secondary" onClick={onClose}>Back to buddies</button></div>
       </div>
@@ -317,7 +315,6 @@ function WorkspaceSidebar({ section, onNavigate, hangoutCount }) {
           </button>
         ))}
       </nav>
-      <div className="workspace-sidebar-note"><span aria-hidden="true">✦</span><p>Good things start with a hello.</p></div>
     </aside>
   )
 }
