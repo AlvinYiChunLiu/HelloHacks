@@ -4,7 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'node:url';
-import { randomBytes, scrypt } from 'node:crypto';
+import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const scryptAsync = promisify(scrypt);
@@ -229,6 +229,46 @@ app.post('/api/login', async (req, res) => {
       });
     } catch {
       return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+  });
+});
+
+app.post('/api/change-password', async (req, res) => {
+  const { username, currentPassword, newPassword } = req.body || {};
+  if (typeof username !== 'string' || typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+    return res.status(400).json({ error: 'Username and both passwords are required.' });
+  }
+  if (newPassword.length < 8 || newPassword.length > 128) {
+    return res.status(400).json({ error: 'Use a new password with 8 to 128 characters.' });
+  }
+
+  const normalizedUsername = username.trim().toLowerCase();
+  db.get('SELECT id, password_hash FROM users WHERE username = ?', [normalizedUsername], async (error, row) => {
+    if (error) return res.status(500).json({ error: 'Unable to change your password.' });
+    if (!row) return res.status(404).json({ error: 'Account not found.' });
+
+    const [scheme, N, r, p, salt, hashHex] = String(row.password_hash).split('$');
+    if (scheme !== 'scrypt' || !salt || !hashHex) {
+      return res.status(500).json({ error: 'This account password cannot be updated.' });
+    }
+
+    try {
+      const currentHash = await scryptAsync(currentPassword, salt, 64, { N: Number(N), r: Number(r), p: Number(p), maxmem: 256 * 1024 * 1024 });
+      const expectedHash = Buffer.from(hashHex, 'hex');
+      if (currentHash.length !== expectedHash.length || !timingSafeEqual(currentHash, expectedHash)) {
+        return res.status(401).json({ error: 'Current password is incorrect.' });
+      }
+
+      const nextSalt = randomBytes(16).toString('hex');
+      const nextHash = await scryptAsync(newPassword, nextSalt, 64, SCRYPT_OPTIONS);
+      const passwordHash = `scrypt$${SCRYPT_OPTIONS.N}$${SCRYPT_OPTIONS.r}$${SCRYPT_OPTIONS.p}$${nextSalt}$${nextHash.toString('hex')}`;
+      db.run('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, row.id], function (updateError) {
+        if (updateError) return res.status(500).json({ error: 'Unable to change your password.' });
+        if (this.changes !== 1) return res.status(404).json({ error: 'Account not found.' });
+        return res.json({ message: 'Password changed successfully.' });
+      });
+    } catch {
+      return res.status(500).json({ error: 'Unable to change your password.' });
     }
   });
 });
