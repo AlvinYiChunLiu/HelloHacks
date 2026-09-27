@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowIcon, CloseIcon } from './Icons'
 import { sortHangouts, createHangoutId } from '../lib/hangouts'
-import { UBC_LOCATIONS } from '../data/ubcLocations'
 import './HangoutsBoard.css'
 
 const EMPTY_HANGOUT = { title: '', location: '', description: '', startsAt: '', endsAt: '' }
@@ -59,23 +58,46 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
   const [draft, setDraft] = useState(EMPTY_HANGOUT)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [campusLocations, setCampusLocations] = useState([])
+  const [locationsLoading, setLocationsLoading] = useState(false)
+  const [locationLoadError, setLocationLoadError] = useState('')
   const [locationQuery, setLocationQuery] = useState('')
   const [locationOpen, setLocationOpen] = useState(false)
   const [activeLocationIndex, setActiveLocationIndex] = useState(-1)
-  const selectedLocation = UBC_LOCATIONS.find((location) => location.id === draft.location)
+  const selectedLocation = campusLocations.find((location) => location.id === draft.location)
   const normalizedLocationQuery = locationQuery.trim().toLocaleLowerCase()
   const matchingLocations = normalizedLocationQuery
-    ? UBC_LOCATIONS.filter((building) => {
+    ? campusLocations.filter((building) => {
       const searchableText = [building.name, building.description, building.kind, ...(building.aliases || [])].join(' ').toLocaleLowerCase()
       return searchableText.includes(normalizedLocationQuery)
     }).sort((first, second) => {
       const rankDifference = getLocationMatchRank(first, normalizedLocationQuery) - getLocationMatchRank(second, normalizedLocationQuery)
       return rankDifference || first.name.localeCompare(second.name)
     })
-    : UBC_LOCATIONS
+    : campusLocations
       .filter((building) => building.featured)
       .sort((first, second) => POPULAR_LOCATION_ORDER.indexOf(first.id) - POPULAR_LOCATION_ORDER.indexOf(second.id))
   const locationOptions = matchingLocations.slice(0, MAX_LOCATION_RESULTS)
+
+  useEffect(() => {
+    if (!composerOpen || campusLocations.length) return undefined
+    let active = true
+    setLocationsLoading(true)
+    setLocationLoadError('')
+    import('../data/ubcLocations')
+      .then(({ UBC_LOCATIONS }) => {
+        if (active) setCampusLocations(UBC_LOCATIONS)
+      })
+      .catch(() => {
+        if (active) setLocationLoadError('Campus locations could not be loaded. Close and reopen the form to try again.')
+      })
+      .finally(() => {
+        if (active) setLocationsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [composerOpen, campusLocations.length])
 
   function update(field, value) {
     setDraft((previous) => ({ ...previous, [field]: value }))
@@ -182,13 +204,13 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
                 {locationOpen && (
                   <ul id="ubc-location-options" className="hangout-location-options" role="listbox" aria-label="UBC campus locations">
                     <li className="hangout-location-hint" role="presentation">
-                      {normalizedLocationQuery
+                      {locationsLoading ? 'Loading campus locations...' : locationLoadError || (normalizedLocationQuery
                         ? matchingLocations.length > MAX_LOCATION_RESULTS
                           ? `Showing ${MAX_LOCATION_RESULTS} of ${matchingLocations.length} matches · keep typing to narrow down`
                           : `${matchingLocations.length} matching ${matchingLocations.length === 1 ? 'location' : 'locations'}`
-                        : `Popular campus spots · search all ${UBC_LOCATIONS.length} locations`}
+                        : `Popular campus spots · search all ${campusLocations.length} locations`)}
                     </li>
-                    {locationOptions.length ? locationOptions.map((location, index) => (
+                    {locationsLoading ? <li className="hangout-location-empty" role="status">Loading campus locations...</li> : locationOptions.length ? locationOptions.map((location, index) => (
                       <li key={location.id} role="presentation">
                         <button
                           id={`ubc-location-option-${location.id}`}
