@@ -238,3 +238,199 @@
 .site-footer svg {
   color: var(--red);
 }
+
+/* International-student landing page */
+.home.welcome-home {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(145deg, #fffdf7 4%, #fffaf0 47%, #f5f8ff 100%);
+}
+.home.welcome-home::before {
+  position: absolute;
+  z-index: -1;
+  inset: -12%;
+  background:
+    radial-gradient(ellipse at 15% 35%, #ffd98670 0, transparent 27%),
+    radial-gradient(ellipse at 87% 23%, #a9c9ff70 0, transparent 29%),
+    radial-gradient(ellipse at 69% 87%, #e1cfff65 0, transparent 27%),
+    radial-gradient(#6e89b21c .8px, transparent .8px);
+  background-size: auto, auto, auto, 25px 25px;
+  content: '';
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 50%, transparent 100%);
+}
+.welcome-home .hero {
+  position: relative;
+  isolation: isolate;
+  min-height: min(750px, calc(100svh - 155px));
+  padding: 45px 0 54px;
+}
+.hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 760px);
+}
+.hero-content .buddy-illustration {
+  width: 146px;
+  height: 90px;
+  margin-bottom: 24px;
+}
+.hero-content .eyebrow {
+  margin-bottom: 17px;
+  color: #4c6395;
+  letter-spacing: 1.8px;
+}
+.hero-content h2 {
+  max-width: 100%;
+  font-size: clamp(46px, 5.2vw, 68px);
+  line-height: 1.08;
+  letter-spacing: -2.8px;
+}
+.hero h2 .hero-title-line {
+  display: block;
+  color: var(--ink);
+}
+.hero h2 .hero-title-accent {
+  color: var(--red);
+}
+.hero-description {
+  max-width: 530px;
+  margin: 21px 0 30px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+.hero-activity {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.hero-activity-card {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  width: 264px;
+  padding: 13px 16px 13px 13px;
+  border: 1px solid #ffffffd9;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffffffd9, #ffffff8c);
+  box-shadow: 0 16px 44px #344d7417, inset 0 1px #ffffffc9;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.hero-activity-card--match {
+  top: 13%;
+  left: 1.5%;
+  transform: rotate(-5deg);
+}
+.hero-activity-card--study {
+  top: 37%;
+  right: 1%;
+  transform: rotate(4deg);
+}
+.hero-activity-card--hobby {
+  bottom: 9%;
+  left: 9%;
+  transform: rotate(3deg);
+}
+.hero-activity-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  background: #fff2c8;
+  color: #a36a0d;
+  font-size: 19px;
+  font-weight: 700;
+}
+.hero-activity-card--study .hero-activity-icon {
+  background: #e8efff;
+  color: #3559b1;
+}
+.hero-activity-card--hobby .hero-activity-icon {
+  background: #f5eaff;
+  color: #844d9b;
+}
+.hero-activity-card p {
+  margin: 0;
+  text-align: left;
+}
+.hero-activity-label {
+  margin-bottom: 4px !important;
+  color: #758097;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.hero-activity-title {
+  color: #29364c;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.hero-activity-meta {
+  margin-top: 3px !important;
+  color: #68758a;
+  font-size: 9px;
+  line-height: 1.4;
+}
+@media (max-width: 1000px) {
+  .hero-activity-card { width: 236px; opacity: .78; }
+  .hero-activity-card--match { left: 0; }
+  .hero-activity-card--study { right: 0; }
+  .hero-activity-card--hobby { left: 3%; }
+}
+@media (max-width: 700px) {
+  .welcome-home .hero {
+    min-height: 650px;
+    padding: 35px 0 43px;
+  }
+  .hero-content .buddy-illustration {
+    width: 126px;
+    height: 77px;
+    margin-bottom: 21px;
+  }
+  .hero-content .eyebrow {
+    max-width: 100%;
+    margin-bottom: 14px;
+    font-size: 9px;
+    letter-spacing: 1.15px;
+  }
+  .hero-content h2 {
+    font-size: clamp(42px, 9.4vw, 54px);
+    letter-spacing: -2px;
+  }
+  .hero-description {
+    max-width: 360px;
+    margin: 18px 0 25px;
+    font-size: 15px;
+  }
+  .hero-activity-card {
+    width: min(220px, 65vw);
+    grid-template-columns: 31px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px 12px 10px 10px;
+    opacity: .28;
+  }
+  .hero-activity-icon { width: 31px; height: 31px; border-radius: 11px; font-size: 16px; }
+  .hero-activity-card--match { top: 3%; left: -15px; }
+  .hero-activity-card--study { top: 40%; right: -16px; }
+  .hero-activity-card--hobby { bottom: 2%; left: -11px; }
+}
+@media (max-width: 380px) {
+  .welcome-home .hero { min-height: 620px; }
+  .hero-content h2 { font-size: 40px; }
+  .hero-content .eyebrow { font-size: 8px; }
+  .hero-activity-card { opacity: .2; }
+}
