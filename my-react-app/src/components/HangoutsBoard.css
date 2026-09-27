@@ -17,6 +17,19 @@
 .hangout-form > label:nth-child(1), .hangout-form > label:nth-child(2), .hangout-time-fields, .hangout-form > label:nth-child(4), .hangout-form-error, .hangout-privacy-note, .hangout-submit-button { grid-column: 1 / -1; }
 .hangout-form input, .hangout-form textarea { width: 100%; min-width: 0; padding: 10px 11px; border: 1px solid #cbd5e5; border-radius: 8px; background: #fff; color: var(--ink); font: inherit; font-size: 12px; font-weight: 400; }
 .hangout-form input { height: 41px; }
+.hangout-form-location { position: relative; z-index: 2; display: grid; grid-column: 1 / -1; gap: 6px; min-width: 0; color: #36445a; font-size: 10px; font-weight: 650; }
+.hangout-location-picker { position: relative; }
+.hangout-location-picker > input { width: 100%; height: 41px; padding: 10px 11px; border: 1px solid #cbd5e5; border-radius: 8px; background: #fff; color: var(--ink); font: inherit; font-size: 12px; font-weight: 400; }
+.hangout-location-picker > input:focus { border-color: #7196e5; outline: 3px solid #477bea28; }
+.hangout-location-options { position: absolute; z-index: 5; top: calc(100% + 5px); right: 0; left: 0; max-height: 230px; margin: 0; padding: 5px; overflow: auto; border: 1px solid #dce4ef; border-radius: 10px; background: #fff; box-shadow: 0 12px 28px #243a571f; list-style: none; }
+.hangout-location-options > li { margin: 0; padding: 0; }
+.hangout-location-options > .hangout-location-hint { padding: 7px 10px 6px; color: #8490a1; font-size: 9px; font-weight: 550; }
+.hangout-location-options button { display: grid; width: 100%; gap: 4px; padding: 9px 10px; border: 0; border-radius: 7px; background: transparent; color: #344259; text-align: left; cursor: pointer; }
+.hangout-location-options button:hover, .hangout-location-options button.is-active, .hangout-location-options button[aria-selected="true"] { background: #edf3ff; color: #2457d6; }
+.hangout-location-options button > span { font-size: 11px; font-weight: 650; }
+.hangout-location-options button > small { color: #7b8798; font-size: 9px; font-weight: 400; }
+.hangout-location-empty { padding: 11px 10px; color: #7b8798; font-size: 10px; font-weight: 400; }
+.hangout-location-confirmation { margin: 0; color: #2c7853; font-size: 9px; font-weight: 450; }
 .hangout-form textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
 .hangout-form input:focus, .hangout-form textarea:focus { border-color: #7196e5; outline: 3px solid #477bea28; }
 .hangout-form label small { margin-left: 4px; color: var(--muted); font-size: 9px; font-weight: 400; }

@@ -5,7 +5,7 @@ import ProfileSocials from '../components/ProfileSocials'
 import CountryFlag from '../components/CountryFlag'
 import CopyButton from '../components/CopyButton'
 import { BookmarkIcon, SearchIcon, FilterIcon, SparkIcon } from '../components/DiscoveryIcons'
-import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, searchBuddies } from '../lib/discovery'
+import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, savedBuddiesStorageKey, SAVED_BUDDIES_EVENT, searchBuddies } from '../lib/discovery'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
 import { LANGUAGES, PROFILE_COLORS } from '../data/profileOptions'
@@ -200,10 +200,38 @@ function BuddyResults({ matches, savedIds, onSave, onView, requestedIds, onReque
         {matches.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category="filtered" onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} requested={requestedIds.has(buddy.id)} onRequest={onRequest} showScore />)}
         {!matches.length && <div className="buddy-filter-empty"><div className="empty-state-icon">{isSaved ? <BookmarkIcon /> : <SearchIcon />}</div><h3>{isSaved && !savedIds.length ? 'Keep a good connection in mind.' : 'No matches just yet.'}</h3><p>{isSaved && !savedIds.length ? 'Tap the bookmark on a profile to find it here later.' : 'Try a different search or give your filters a little more room.'}</p><button className="filter-edit-button" onClick={hasCriteria ? onReset : onDiscover}>{hasCriteria ? 'Reset search and filters' : 'Discover buddies'}<ArrowIcon /></button></div>}
       </div>
-      {isSaved && matches.length > 0 && <p className="saved-note">Saved in this browser tab for your profile.</p>}
+      {isSaved && matches.length > 0 && <p className="saved-note">Saved in this browser for your profile.</p>}
     </section>
   )
 }
+
+function SavedBuddies({ profile, filters, query, sort, onSave, onView, requestedIds, onRequest, onReset, onDiscover, hasCriteria }) {
+  const [storedBuddies, setStoredBuddies] = useState(() => readSavedBuddies(profile))
+
+  useEffect(() => {
+    const storageKey = savedBuddiesStorageKey(profile)
+    const refresh = (event) => {
+      if (event.type === 'storage') {
+        if (event.key !== null && event.key !== storageKey) return
+      } else if (event.detail?.key !== storageKey) {
+        return
+      }
+      setStoredBuddies(readSavedBuddies(profile))
+    }
+    window.addEventListener('storage', refresh)
+    window.addEventListener(SAVED_BUDDIES_EVENT, refresh)
+    return () => {
+      window.removeEventListener('storage', refresh)
+      window.removeEventListener(SAVED_BUDDIES_EVENT, refresh)
+    }
+  }, [profile, profile.id, profile.username])
+
+  const savedIds = storedBuddies.map((buddy) => buddy.id)
+  const matches = searchBuddies(getFilteredBuddies(profile, filters, storedBuddies), query, countryNames)
+  if (sort === 'name') matches.sort((a, b) => a.name.localeCompare(b.name))
+  return <BuddyResults matches={matches} savedIds={savedIds} onSave={onSave} onView={onView} requestedIds={requestedIds} onRequest={onRequest} isSaved onReset={onReset} onDiscover={onDiscover} hasCriteria={hasCriteria} />
+}
+
 function ProfilePanel({ profile, onEdit }) {
   const age = getAge(profile.birthday)
   const colorName = PROFILE_COLORS.find((color) => color.value.toLowerCase() === profile.favoriteColor.toLowerCase())?.name || 'Your color'
@@ -315,13 +343,14 @@ export default function MainPage({ profile, onEdit }) {
   const [view, setView] = useState('discover')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('common')
-  const [savedIds, setSavedIds] = useState(() => readSavedBuddies(profile))
+  const [savedBuddies, setSavedBuddies] = useState(() => readSavedBuddies(profile))
   const [feedback, setFeedback] = useState('')
   const [backendUsers, setBackendUsers] = useState([])
   const titleRef = useRef(null)
   const feedbackTimer = useRef(null)
   const hangouts = sortHangouts([...SAMPLE_HANGOUTS, ...userHangouts])
-  const savedCount = savedIds.length
+  const savedIds = useMemo(() => savedBuddies.map((buddy) => buddy.id), [savedBuddies])
+  const savedCount = savedBuddies.length
 
   useEffect(() => {
     fetch('http://localhost:5000/api/users')
@@ -340,7 +369,7 @@ export default function MainPage({ profile, onEdit }) {
 
   const buddies = useMemo(() => backendUsers.map(normalizeBackendUser), [backendUsers])
   const matches = getBuddyMatches(profile, buddies)
-  const filteredBuddies = getFilteredBuddies(profile, appliedFilters, buddies)
+  const filteredBuddies = getFilteredBuddies(profile, appliedFilters, view === 'saved' ? savedBuddies : buddies)
   const choices = activeFilterChoices(appliedFilters)
   const hasCriteria = choices.length > 0 || query.trim().length > 0
   const previewCount = filteredBuddies.length
@@ -356,10 +385,30 @@ export default function MainPage({ profile, onEdit }) {
     return () => window.clearTimeout(feedbackTimer.current)
   }, [])
 
+  useEffect(() => {
+    const storageKey = savedBuddiesStorageKey(profile)
+    const syncFromStorage = (event) => {
+      if (event.type === 'storage') {
+        if (event.key !== null && event.key !== storageKey) return
+      } else if (event.detail?.key !== storageKey) {
+        return
+      }
+      setSavedBuddies(readSavedBuddies(profile))
+    }
+    window.addEventListener('storage', syncFromStorage)
+    window.addEventListener(SAVED_BUDDIES_EVENT, syncFromStorage)
+    return () => {
+      window.removeEventListener('storage', syncFromStorage)
+      window.removeEventListener(SAVED_BUDDIES_EVENT, syncFromStorage)
+    }
+  }, [profile, profile.id, profile.username])
+
   function toggleSave(buddy) {
-    const alreadySaved = savedIds.includes(buddy.id)
-    const next = alreadySaved ? savedIds.filter((id) => id !== buddy.id) : [...savedIds, buddy.id]
-    setSavedIds(next)
+    const alreadySaved = savedBuddies.some((savedBuddy) => savedBuddy.id === buddy.id)
+    const next = alreadySaved
+      ? savedBuddies.filter((savedBuddy) => savedBuddy.id !== buddy.id)
+      : [...savedBuddies, buddy]
+    setSavedBuddies(next)
     const stored = saveBuddies(profile, next)
     showFeedback(`${buddy.name.split(' ')[0]} ${alreadySaved ? 'removed from saved buddies' : 'saved for later'}.${stored ? '' : ' This change will last until you leave the page.'}`)
   }
@@ -477,14 +526,14 @@ export default function MainPage({ profile, onEdit }) {
                 <label className="buddy-sort"><span className="sr-only">Sort buddies</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="common">Most in common</option><option value="name">Name: A to Z</option></select></label>
               </div>
               <div className="buddy-content-grid">
-                {showColumns ? <section className="buddy-discovery" aria-labelledby="discovery-title">
+                {view === 'saved' ? <SavedBuddies profile={profile} filters={appliedFilters} query={query} sort={sort} onSave={toggleSave} onView={setSelectedBuddy} requestedIds={requestedIds} onRequest={requestBuddy} onReset={clearFilters} onDiscover={() => chooseView('discover')} hasCriteria={hasCriteria} /> : showColumns ? <section className="buddy-discovery" aria-labelledby="discovery-title">
                   <div className="discovery-heading"><div><h2 id="discovery-title">A few things in common</h2><p>Start with something familiar. Discover someone new.</p></div><span className="curated-mark"><SparkIcon />Picked for you</span></div>
                   <div className="buddy-columns">
                     <BuddyColumn title="Nationality" category="nationality" description={`A little closer to ${countryName(profile.nationality)}.`} matches={matches.nationality} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} requestedIds={requestedIds} onRequest={requestBuddy} />
                     <BuddyColumn title="Sport" category="sports" description="A teammate for your next game." matches={matches.sports} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} requestedIds={requestedIds} onRequest={requestBuddy} />
                     <BuddyColumn title="Hobbies" category="hobbies" description="Good company for your favorite things." matches={matches.hobbies} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} requestedIds={requestedIds} onRequest={requestBuddy} />
                   </div>
-                </section> : <BuddyResults matches={filteredBuddies} savedIds={savedIds} onSave={toggleSave} onView={setSelectedBuddy} requestedIds={requestedIds} onRequest={requestBuddy} isSaved={view === 'saved'} hasCriteria={hasCriteria} onReset={clearFilters} onDiscover={() => chooseView('discover')} />}
+                </section> : <BuddyResults matches={filteredBuddies} savedIds={savedIds} onSave={toggleSave} onView={setSelectedBuddy} requestedIds={requestedIds} onRequest={requestBuddy} hasCriteria={hasCriteria} onReset={clearFilters} onDiscover={() => chooseView('discover')} />}
                 <ProfilePanel profile={profile} onEdit={onEdit} />
               </div>
             </section>
