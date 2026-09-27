@@ -2,10 +2,15 @@
   width: min(100%, 1600px);
   padding-inline: 40px;
 }
-.dashboard-account-nav { display: flex; align-items: center; gap: 18px; }
+.dashboard-account-nav { display: flex; align-items: center; }
+.dashboard-account-menu { position: relative; display: flex; align-items: center; padding: 4px 6px 4px 5px; border: 1px solid var(--theme-border); border-radius: 40px; background: #fff; }
 .dashboard-account-link { display: flex; align-items: center; gap: 9px; border: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 600; }
-.dashboard-sign-out { min-height: 36px; padding: 6px 0; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
-.dashboard-sign-out:hover { color: var(--primary); }
+.dashboard-account-link[aria-expanded="true"] { color: var(--theme-text); }
+.dashboard-account-dropdown { position: absolute; z-index: 20; top: calc(100% + 9px); right: 0; min-width: 140px; padding: 5px; border: 1px solid var(--theme-border); border-radius: 12px; background: #fff; box-shadow: 0 10px 28px #1832571f; }
+.dashboard-account-action { display: block; width: 100%; min-height: 36px; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; text-align: left; cursor: pointer; }
+.dashboard-account-action:hover { background: var(--theme-soft); color: var(--theme-text); }
+.dashboard-sign-out { width: 100%; min-height: 36px; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; text-align: left; }
+.dashboard-sign-out:hover { color: var(--theme-text); }
 .dashboard { flex: 1; padding: 40px 0 52px; }
 .dashboard-intro { display: flex; flex-direction: column; align-items: center; padding: 8px 0 40px; text-align: center; }
 .dashboard-intro .eyebrow { margin-bottom: 13px; font-size: 10px; letter-spacing: 2px; }
@@ -163,7 +168,7 @@
   .home.dashboard-shell { padding-inline: 20px; }
   .dashboard { padding-top: 33px; }
   .dashboard-account-link > span:last-child { display: none; }
-  .dashboard-account-nav { gap: 12px; }
+  .dashboard-account-menu { padding-right: 4px; }
   .dashboard-intro .eyebrow { font-size: 9px; letter-spacing: 1.2px; }
   .dashboard-intro h2 { font-size: 30px; }
   .dashboard-intro > p:not(.eyebrow) { font-size: 12px; }

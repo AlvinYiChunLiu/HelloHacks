@@ -272,7 +272,6 @@ const WORKSPACE_SECTIONS = [
   { id: 'map', label: 'Campus map' },
   { id: 'buddies', label: 'Find buddies' },
   { id: 'hangouts', label: 'Campus Hangouts' },
-  { id: 'profile', label: 'My profile' },
 ]
 
 function WorkspaceIcon({ section }) {
@@ -302,12 +301,17 @@ function WorkspaceSidebar({ section, onNavigate, hangoutCount }) {
   )
 }
 
-export default function MainPage({ profile, onEdit }) {
+export default function MainPage({ profile, onEdit, registerNavigate }) {
   const [section, setSection] = useState('map')
   const [userHangouts, setUserHangouts] = useState(readHangouts)
   const [goingIds, setGoingIds] = useState(() => new Set())
   const [selectedHangoutId, setSelectedHangoutId] = useState(null)
   const [requestedIds, setRequestedIds] = useState(() => new Set())
+
+  useEffect(() => {
+    registerNavigate?.((nextSection) => setSection(nextSection))
+    return () => registerNavigate?.(null)
+  }, [registerNavigate])
   const [selectedBuddy, setSelectedBuddy] = useState(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [draftFilters, setDraftFilters] = useState(emptyBuddyFilters)

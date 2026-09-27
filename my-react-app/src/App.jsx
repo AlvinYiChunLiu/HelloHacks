@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowIcon, BuddyMark, CloseIcon } from './components/Icons'
 import ProfileAvatar from './components/ProfileAvatar'
 import CreateProfile from './pages/CreateProfile'
@@ -45,6 +45,8 @@ export default function App() {
   const [profile, setProfile] = useState(readActiveProfile)
   const [notice, setNotice] = useState('')
   const [draftColor, setDraftColor] = useState(null)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const navigateWorkspace = useRef(null)
   const activeRoute = ['/main', '/edit-profile'].includes(route) && !profile ? '/sign-in' : route
   const isForm = ['/create-profile', '/edit-profile'].includes(activeRoute)
   const isPersonalTheme = isForm || activeRoute === '/main'
@@ -61,6 +63,22 @@ export default function App() {
     window.addEventListener('hashchange', handleRoute)
     return () => window.removeEventListener('hashchange', handleRoute)
   }, [])
+
+  useEffect(() => {
+    if (!accountMenuOpen) return undefined
+    const closeOnOutsideClick = (event) => {
+      if (!event.target.closest('.dashboard-account-menu')) setAccountMenuOpen(false)
+    }
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setAccountMenuOpen(false)
+    }
+    document.addEventListener('click', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('click', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [accountMenuOpen])
 
   function completeProfile(nextProfile) {
     const normalized = normalizeProfile(nextProfile)
@@ -98,6 +116,7 @@ export default function App() {
   }
 
   function signOut() {
+    setAccountMenuOpen(false)
     clearActiveProfile()
     setProfile(null)
     setNotice('')
@@ -110,14 +129,14 @@ export default function App() {
       <header className="site-header">
         <a className="brand" href={profile ? '#/main' : '#/'} aria-label="InterBuddies home"><BuddyMark className="brand-mark" /><h1>InterBuddies</h1></a>
         {isForm && <span className="header-note">{activeRoute === '/edit-profile' ? 'Make it feel like you.' : 'A little closer to your people.'}</span>}
-        {activeRoute === '/main' && <nav className="dashboard-account-nav" aria-label="Your account"><button className="dashboard-account-link" onClick={() => { window.location.hash = '/edit-profile' }} aria-label="Edit your profile"><ProfileAvatar profile={profile} size="small" /><span>{profile.name}</span></button><button className="dashboard-sign-out" onClick={signOut}>Sign out</button></nav>}
+        {activeRoute === '/main' && <nav className="dashboard-account-nav" aria-label="Your account"><div className="dashboard-account-menu"><button className="dashboard-account-link" aria-expanded={accountMenuOpen} aria-haspopup="true" onClick={() => setAccountMenuOpen((open) => !open)}><ProfileAvatar profile={profile} size="small" /><span>{profile.name}</span></button>{accountMenuOpen && <div className="dashboard-account-dropdown"><button className="dashboard-account-action" onClick={() => { setAccountMenuOpen(false); navigateWorkspace.current?.('profile') }}>My profile</button><button className="dashboard-sign-out" onClick={signOut}>Sign out</button></div>}</div></nav>}
       </header>
       {notice && activeRoute === '/main' && <div className="profile-update-notice"><span role="status">{notice}</span><button onClick={() => setNotice('')} aria-label="Dismiss notification"><CloseIcon /></button></div>}
       {activeRoute === '/' && <Welcome />}
       {activeRoute === '/create-profile' && <CreateProfile key="create" onComplete={completeProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/' }} />}
       {activeRoute === '/edit-profile' && <CreateProfile key="edit" mode="edit" initialProfile={profile} onComplete={updateProfile} onColorChange={setDraftColor} onExit={() => { window.location.hash = '/main' }} />}
       {activeRoute === '/sign-in' && <SignIn onSignIn={handleSignIn} />}
-      {activeRoute === '/main' && <MainPage key={profile.id || profile.username} profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} />}
+      {activeRoute === '/main' && <MainPage key={profile.id || profile.username} profile={profile} onEdit={() => { window.location.hash = '/edit-profile' }} registerNavigate={(callback) => { navigateWorkspace.current = callback }} />}
       <footer className="site-footer">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
         A little hello can go a long way.
