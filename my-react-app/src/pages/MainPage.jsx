@@ -13,8 +13,7 @@ import { emptyBuddyFilters, getBuddyMatches, getFilteredBuddies, getSharedProfil
 import { HOBBIES, SPORTS } from '../lib/profile'
 import CampusMap from '../components/CampusMap'
 import HangoutsBoard, { HangoutCard } from '../components/HangoutsBoard'
-import { readHangouts, saveHangouts, sortHangouts } from '../lib/hangouts'
-import { SAMPLE_HANGOUTS } from '../data/sampleHangouts'
+import { sortHangouts } from '../lib/hangouts'
 import './MainPage.css'
 
 function normalizeBackendUser(user) {
@@ -325,7 +324,7 @@ function WorkspaceSidebar({ section, onNavigate, hangoutCount }) {
 
 export default function MainPage({ profile, onEdit, registerNavigate }) {
   const [section, setSection] = useState('map')
-  const [userHangouts, setUserHangouts] = useState(readHangouts)
+  const [userHangouts, setUserHangouts] = useState([])
   const [goingIds, setGoingIds] = useState(() => new Set())
   const [selectedHangoutId, setSelectedHangoutId] = useState(null)
 
@@ -344,7 +343,7 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
   const [backendUsers, setBackendUsers] = useState([])
   const titleRef = useRef(null)
   const feedbackTimer = useRef(null)
-  const hangouts = sortHangouts([...SAMPLE_HANGOUTS, ...userHangouts])
+  const hangouts = sortHangouts(userHangouts)
   const savedIds = useMemo(() => savedBuddies.map((buddy) => buddy.id), [savedBuddies])
   const savedCount = savedBuddies.length
 
@@ -361,6 +360,27 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
         console.error('Failed to load users:', error)
         setBackendUsers([])
       })
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    fetch('http://localhost:5000/api/events')
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load campus hangouts.')
+        return response.json()
+      })
+      .then((events) => {
+        if (active) setUserHangouts(Array.isArray(events) ? events.map((event) => ({
+          ...event,
+          latitude: Number.isFinite(Number(event.latitude)) && event.latitude !== null ? Number(event.latitude) : 49.2606,
+          longitude: Number.isFinite(Number(event.longitude)) && event.longitude !== null ? Number(event.longitude) : -123.246,
+        })) : [])
+      })
+      .catch((error) => {
+        console.error('Failed to load events:', error)
+        if (active) showFeedback('Campus hangouts could not be loaded. Check the backend connection.')
+      })
+    return () => { active = false }
   }, [])
 
   const buddies = useMemo(() => backendUsers.map(normalizeBackendUser), [backendUsers])
@@ -426,25 +446,36 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
     showFeedback('You’re on the demo guest list. Nothing was sent.')
   }
 
-  function addHangout(event) {
-    const nextHangouts = [...userHangouts, event]
-    const saved = saveHangouts(nextHangouts)
-    setUserHangouts(nextHangouts)
-    setSelectedHangoutId(event.id)
+  async function addHangout(event) {
+    const response = await fetch('http://localhost:5000/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || !payload.event) throw new Error(payload.error || 'Unable to save this hangout.')
+    const savedEvent = payload.event
+    setUserHangouts((previous) => [...previous, savedEvent])
+    setSelectedHangoutId(savedEvent.id)
     setSection('map')
-    showFeedback(saved ? 'Hangout pinned and saved in this browser.' : 'Hangout pinned for this visit. Browser storage is unavailable.')
+    showFeedback('Hangout saved to campus events.')
   }
 
-  function removeHangout(eventId) {
-    const nextHangouts = userHangouts.filter((event) => event.id !== eventId)
-    saveHangouts(nextHangouts)
-    setUserHangouts(nextHangouts)
+  async function removeHangout(eventId) {
+    const response = await fetch(`http://localhost:5000/api/events/${encodeURIComponent(eventId)}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: profile.username }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || 'Unable to remove this hangout.')
+    setUserHangouts((previous) => previous.filter((event) => event.id !== eventId))
     setGoingIds((previous) => {
       const next = new Set(previous)
       next.delete(eventId)
       return next
     })
-    showFeedback('Your hangout was removed from this browser.')
+    showFeedback('Your hangout was removed.')
   }
 
   function findBuddy() {
@@ -480,7 +511,7 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
                 <button type="button" className="workspace-primary-button" onClick={() => setSection('hangouts')}><span aria-hidden="true">＋</span> Post a hangout</button>
               </header>
               <div className="campus-map-layout">
-                <div className="campus-map-frame"><CampusMap events={hangouts} goingIds={goingIds} selectedEventId={selectedHangoutId} onSelectEvent={setSelectedHangoutId} onGoing={markGoing} /><p className="map-demo-caption">Demo meetups and locally posted hangouts. Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>.</p></div>
+                <div className="campus-map-frame"><CampusMap events={hangouts} goingIds={goingIds} selectedEventId={selectedHangoutId} onSelectEvent={setSelectedHangoutId} onGoing={markGoing} /><p className="map-demo-caption">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>.</p></div>
                 <aside className="map-coming-up" aria-labelledby="coming-up-title">
                   <div className="map-coming-up-heading"><div><p className="eyebrow">ON CAMPUS</p><h3 id="coming-up-title">Coming up</h3></div><span>{hangouts.length}</span></div>
                   <p className="map-coming-up-caption">Choose a plan to open its map pin.</p>
