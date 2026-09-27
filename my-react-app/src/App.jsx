@@ -19,24 +19,43 @@ function readRoute() {
 function Welcome() {
   return (
     <main className="hero">
-      <svg className="buddy-illustration" viewBox="0 0 180 110" fill="none" aria-hidden="true">
-        <path d="M18 101c32 6 102 6 143-1" stroke="#cbd8ed" strokeWidth="2" strokeLinecap="round" />
-        <g transform="rotate(-12 60 58)">
-          <rect x="20" y="15" width="78" height="83" rx="37" fill="#f4c542" stroke="#dfa917" strokeWidth="1.5" />
-          <path d="M45 51v5m24-5v5m-23 14c6 7 15 7 22 0" stroke="#684c08" strokeWidth="3" strokeLinecap="round" />
-        </g>
-        <g transform="rotate(12 125 62)">
-          <rect x="86" y="22" width="75" height="79" rx="36" fill="#2457d6" />
-          <path d="M111 56v5m23-5v5m-23 12c6 7 15 7 22 0" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
-        </g>
-        <path d="m126 5-1 7m16-5-5 6M5 44l7 2" stroke="#cc3344" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <p className="eyebrow">A simple hello. A new connection.</p>
-      <h2>Meet your next<br /><span>buddy.</span></h2>
-      <p className="hero-description">Someone to talk to. Something in common.<br />Start with a hello and see where it goes.</p>
-      <a className="welcome-primary" href="#/create-profile">Create profile<ArrowIcon /></a>
-      <a className="sign-in-button" href="#/sign-in">Sign in</a>
-      <p className="hero-note">New faces. Real connections. Just be you.</p>
+      <ul className="hero-activity" aria-label="Sample UBC community activity">
+        <li className="hero-activity-card hero-activity-card--match">
+          <span className="hero-activity-icon" aria-hidden="true">✦</span>
+          <div><p className="hero-activity-label">Sample match</p><p className="hero-activity-title">Mei found 4 peers from China</p><p className="hero-activity-meta">Computer Science · Year 2</p></div>
+        </li>
+        <li className="hero-activity-card hero-activity-card--study">
+          <span className="hero-activity-icon" aria-hidden="true">↗</span>
+          <div><p className="hero-activity-label">Sample study group</p><p className="hero-activity-title">Brazilian biology students</p><p className="hero-activity-meta">Meeting at Koerner Library</p></div>
+        </li>
+        <li className="hero-activity-card hero-activity-card--hobby">
+          <span className="hero-activity-icon" aria-hidden="true">♡</span>
+          <div><p className="hero-activity-label">Sample shared interest</p><p className="hero-activity-title">Arjun found badminton fans</p><p className="hero-activity-meta">Engineering · Orchard Commons</p></div>
+        </li>
+      </ul>
+      <div className="hero-content">
+        <svg className="buddy-illustration" viewBox="0 0 180 110" fill="none" aria-hidden="true">
+          <path d="M18 101c32 6 102 6 143-1" stroke="#cbd8ed" strokeWidth="2" strokeLinecap="round" />
+          <g transform="rotate(-12 60 58)">
+            <rect x="20" y="15" width="78" height="83" rx="37" fill="#f4c542" stroke="#dfa917" strokeWidth="1.5" />
+            <path d="M45 51v5m24-5v5m-23 14c6 7 15 7 22 0" stroke="#684c08" strokeWidth="3" strokeLinecap="round" />
+          </g>
+          <g transform="rotate(12 125 62)">
+            <rect x="86" y="22" width="75" height="79" rx="36" fill="#2457d6" />
+            <path d="M111 56v5m23-5v5m-23 12c6 7 15 7 22 0" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+          </g>
+          <path d="m126 5-1 7m16-5-5 6M5 44l7 2" stroke="#cc3344" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        <p className="eyebrow">UBC's international student community</p>
+        <h2 aria-label="Find your piece of home at UBC.">
+          <span className="hero-title-line" aria-hidden="true">Find your piece of</span>
+          <span className="hero-title-line" aria-hidden="true"><span className="hero-title-accent">home</span> at UBC.</span>
+        </h2>
+        <p className="hero-description">Connect with peers who share your home country, your major, and your hobbies.</p>
+        <a className="welcome-primary" href="#/create-profile">Create profile<ArrowIcon /></a>
+        <a className="sign-in-button" href="#/sign-in">Sign in</a>
+        <p className="hero-note">New faces. Real connections. Just be you.</p>
+      </div>
     </main>
   )
 }
@@ -128,7 +147,7 @@ export default function App() {
   }
 
   return (
-    <div className={`home${isForm ? ' onboarding-shell' : activeRoute === '/main' ? ' dashboard-shell' : ''}${isPersonalTheme ? ` personal-theme${themeColor ? '' : ' theme-unselected'}` : ''}`} style={isPersonalTheme ? getThemeStyle(themeColor) : undefined}>
+    <div className={`home${activeRoute === '/' ? ' welcome-home' : ''}${isForm ? ' onboarding-shell' : activeRoute === '/main' ? ' dashboard-shell' : ''}${isPersonalTheme ? ` personal-theme${themeColor ? '' : ' theme-unselected'}` : ''}`} style={isPersonalTheme ? getThemeStyle(themeColor) : undefined}>
       <a className="skip-navigation" href="#main-content" onClick={(event) => { event.preventDefault(); const main = document.querySelector('main'); main?.setAttribute('tabindex', '-1'); main?.focus() }}>Skip to content</a>
       <header className="site-header">
         <a className="brand" href={profile ? '#/main' : '#/'} aria-label="InterBuddies home"><BuddyMark className="brand-mark" /><h1>InterBuddies</h1></a>
