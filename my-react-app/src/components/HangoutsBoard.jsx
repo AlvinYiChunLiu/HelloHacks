@@ -128,7 +128,7 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
     }
   }
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault()
     if (saving) return
     if (!selectedLocation) {
@@ -144,7 +144,7 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
     }
     setSaving(true)
     setError('')
-    onAdd({
+    const hangout = {
       id: createHangoutId(),
       title: draft.title.trim(),
       location: selectedLocation.name,
@@ -154,8 +154,15 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
       description: draft.description.trim(),
       startsAt: draft.startsAt,
       endsAt: draft.endsAt,
-      author: { name: author.name || author.username || 'UBC student', nationality: author.nationality || '' },
-    })
+      author: { name: author.name || author.username || 'UBC student', username: author.username || '', nationality: author.nationality || '' },
+    }
+    try {
+      await onAdd(hangout)
+    } catch (submitError) {
+      setError(submitError.message || 'Unable to save this hangout.')
+      setSaving(false)
+      return
+    }
     setDraft(EMPTY_HANGOUT)
     setLocationQuery('')
     setLocationOpen(false)
@@ -236,7 +243,7 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
             </div>
             <label><span>Details <small>Optional</small></span><textarea rows="3" maxLength={500} value={draft.description} onChange={(event) => update('description', event.target.value)} placeholder="Add a little context for people joining." /></label>
             {error && <p className="hangout-form-error" role="alert">{error}</p>}
-            <p className="hangout-privacy-note">Choose a campus location from the list to use its saved coordinates. Posts are saved in this browser for the demo.</p>
+            <p className="hangout-privacy-note">Choose a campus location from the list to use its saved coordinates. Posts are saved to the campus events database.</p>
             <button type="submit" className="hangout-submit-button" disabled={saving}>{saving ? 'Saving hangout…' : 'Post and pin hangout'}{!saving && <ArrowIcon />}</button>
           </form>
         </section>
@@ -244,9 +251,11 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
 
       <div className="hangouts-list-heading"><div><h3>Coming up</h3><p>Friendly plans to join around UBC.</p></div><span>{events.length}</span></div>
       <div className="hangouts-card-list">
-        {sortHangouts(events).map((event) => <HangoutCard key={event.id} event={event} onShowOnMap={onShowOnMap} onRemove={event.id.startsWith('demo-') ? undefined : onRemove} />)}
+        {sortHangouts(events).map((event) => <HangoutCard key={event.id} event={event} onShowOnMap={onShowOnMap} onRemove={event.id.startsWith('demo-') || event.author?.username !== author.username ? undefined : async (id) => {
+          try { await onRemove(id) } catch (removeError) { setError(removeError.message || 'Unable to remove this hangout.') }
+        }} />)}
       </div>
-      <p className="hangouts-demo-note">Demo meetups are examples. Your RSVP and new posts stay in this browser; they aren’t sent to other students.</p>
+      <p className="hangouts-demo-note">Hangouts are saved to the campus events database. RSVPs are currently saved only in this browser.</p>
     </div>
   )
 }
