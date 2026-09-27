@@ -144,7 +144,7 @@ app.get('/', (req, res) => {
 });
 
 function readJsonArray(value) {
-  if (Array.isArray(value)) return value;
+  if (Array.isArray(value)) return value
   if (typeof value !== 'string' || !value.trim()) return [];
 
   const trimmed = value.trim();
