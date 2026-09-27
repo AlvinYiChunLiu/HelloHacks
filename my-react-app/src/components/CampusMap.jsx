@@ -22,7 +22,7 @@ function timeLabel(event) {
   return `${start} – ${end}`
 }
 
-function popupContent(event, isGoing, onGoing) {
+function popupContent(event, isGoing, onGoing, onViewAttendee) {
   const card = document.createElement('div')
   card.className = 'hangout-popup'
   const label = document.createElement('span')
@@ -47,7 +47,15 @@ function popupContent(event, isGoing, onGoing) {
   if (event.attendees?.length) {
     event.attendees.forEach((person) => {
       const item = document.createElement('li')
-      item.textContent = `${person.name}  @${person.username}`
+      const link = document.createElement('a')
+      link.textContent = `${person.name}  @${person.username}`
+      link.href = '#'
+      link.addEventListener('click', (clickEvent) => {
+        clickEvent.preventDefault()
+        clickEvent.stopPropagation()
+        onViewAttendee(person)
+      })
+      item.append(link)
       attendees.append(item)
     })
   } else {
@@ -68,7 +76,7 @@ function popupContent(event, isGoing, onGoing) {
   return card
 }
 
-export default function CampusMap({ events, goingIds, selectedEventId, onSelectEvent, onGoing }) {
+export default function CampusMap({ events, goingIds, selectedEventId, onSelectEvent, onGoing, onViewAttendee }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const markersRef = useRef(null)
@@ -116,7 +124,7 @@ export default function CampusMap({ events, goingIds, selectedEventId, onSelectE
           popupAnchor: [0, -34],
         }),
       })
-        .bindPopup(() => popupContent(event, goingIds.has(event.id), onGoing), { maxWidth: 270, minWidth: 220, className: 'hangout-leaflet-popup' })
+        .bindPopup(() => popupContent(event, goingIds.has(event.id), onGoing, onViewAttendee), { maxWidth: 270, minWidth: 220, className: 'hangout-leaflet-popup' })
         .addTo(layer)
       marker.on('click', () => onSelectEvent(event.id))
       markers.set(event.id, marker)
@@ -131,7 +139,7 @@ export default function CampusMap({ events, goingIds, selectedEventId, onSelectE
     } else {
       map.setView(UBC_CENTER, 14)
     }
-  }, [events, goingIds, selectedEventId, onGoing, onSelectEvent])
+  }, [events, goingIds, selectedEventId, onGoing, onSelectEvent, onViewAttendee])
 
   return <div ref={containerRef} className="campus-map-canvas" role="application" aria-label="Interactive map of UBC campus hangouts" />
 }

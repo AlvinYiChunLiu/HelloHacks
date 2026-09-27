@@ -53,6 +53,11 @@
 .hangout-card-main { min-width: 0; }
 .hangout-card-author { display: flex; align-items: center; gap: 6px; margin: 0 0 5px; color: #67758a; font-size: 9px; }
 .hangout-card-author > span:first-child { font-size: 14px; }
+.hangout-card-attendees { margin-top: 10px; color: #67758a; font-size: 11px; }
+.hangout-card-attendees strong { display: block; margin-bottom: 4px; color: #344259; }
+.hangout-card-attendees ul { display: flex; flex-wrap: wrap; gap: 4px 9px; margin: 0; padding: 0; list-style: none; }
+.hangout-card-attendees button { padding: 0; border: 0; background: none; color: #2457d6; font: inherit; cursor: pointer; }
+.hangout-card-attendees button:hover { text-decoration: underline; }
 .hangout-card-main h3 { margin: 0 0 5px; color: #233149; font-size: 13px; font-weight: 650; line-height: 1.4; }
 .hangout-card-time, .hangout-card-place, .hangout-card-description { margin: 0 0 4px; color: #69778c; font-size: 10px; line-height: 1.55; overflow-wrap: anywhere; }
 .hangout-card-place { color: var(--primary); }

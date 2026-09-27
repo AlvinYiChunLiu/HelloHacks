@@ -456,6 +456,12 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
     setSection('map')
   }
 
+  function viewAttendee(person) {
+    const buddy = buddies.find((item) => item.username.toLowerCase() === String(person.username || '').toLowerCase())
+    if (buddy) setSelectedBuddy(buddy)
+    else setSelectedBuddy(normalizeBackendUser(person))
+  }
+
   async function toggleGoing(event) {
     const wasGoing = goingIds.has(event.id)
     const response = await fetch(`http://localhost:5000/api/events/${encodeURIComponent(event.id)}/rsvp`, {
@@ -549,11 +555,11 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
                 <button type="button" className="workspace-primary-button" onClick={() => setSection('hangouts')}><span aria-hidden="true">＋</span> Post a hangout</button>
               </header>
               <div className="campus-map-layout">
-                <div className="campus-map-frame"><CampusMap events={hangouts} goingIds={goingIds} selectedEventId={selectedHangoutId} onSelectEvent={setSelectedHangoutId} onGoing={toggleGoing} /><p className="map-demo-caption">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>.</p></div>
+                <div className="campus-map-frame"><CampusMap events={hangouts} goingIds={goingIds} selectedEventId={selectedHangoutId} onSelectEvent={setSelectedHangoutId} onGoing={toggleGoing} onViewAttendee={viewAttendee} /><p className="map-demo-caption">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>.</p></div>
                 <aside className="map-coming-up" aria-labelledby="coming-up-title">
                   <div className="map-coming-up-heading"><div><p className="eyebrow">ON CAMPUS</p><h3 id="coming-up-title">Coming up</h3></div><span>{hangouts.length}</span></div>
                   <p className="map-coming-up-caption">Choose a plan to open its map pin.</p>
-                  <div className="map-coming-up-list">{hangouts.slice(0, 4).map((event) => <HangoutCard key={event.id} event={event} compact onShowOnMap={selectHangout} />)}</div>
+                  <div className="map-coming-up-list">{hangouts.slice(0, 4).map((event) => <HangoutCard key={event.id} event={event} compact onShowOnMap={selectHangout} onViewAttendee={viewAttendee} />)}</div>
                   <button type="button" className="map-all-hangouts" onClick={() => setSection('hangouts')}>Explore all hangouts <ArrowIcon /></button>
                 </aside>
               </div>
@@ -593,7 +599,7 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
             </section>
           )}
 
-          {section === 'hangouts' && <section className="workspace-page"><HangoutsBoard events={hangouts} author={profile} onAdd={addHangout} onRemove={removeHangout} onShowOnMap={selectHangout} /></section>}
+          {section === 'hangouts' && <section className="workspace-page"><HangoutsBoard events={hangouts} author={profile} onAdd={addHangout} onRemove={removeHangout} onShowOnMap={selectHangout} onViewAttendee={viewAttendee} /></section>}
 
           {section === 'profile' && <section className="workspace-page profile-standalone" aria-labelledby="my-profile-title"><header className="workspace-page-header"><div><p className="eyebrow">YOUR DETAILS</p><h2 id="my-profile-title" ref={titleRef} tabIndex={-1}>My profile</h2><p>Review the details you share with your community.</p></div></header><ProfilePanel profile={profile} onEdit={onEdit} /></section>}
         </div>
