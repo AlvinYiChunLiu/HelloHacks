@@ -5,7 +5,7 @@ import ProfileSocials from '../components/ProfileSocials'
 import CountryFlag from '../components/CountryFlag'
 import CopyButton from '../components/CopyButton'
 import { BookmarkIcon, SearchIcon, FilterIcon, SparkIcon } from '../components/DiscoveryIcons'
-import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, savedBuddiesStorageKey, SAVED_BUDDIES_EVENT, searchBuddies } from '../lib/discovery'
+import { activeFilterChoices, conversationStarter, readSavedBuddies, removeFilterChoice, saveBuddies, savedBuddiesStorageKey, SAVED_BUDDIES_EVENT } from '../lib/discovery'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
 import { LANGUAGES, PROFILE_COLORS } from '../data/profileOptions'
@@ -80,7 +80,7 @@ function buddyAffinity(buddy, category, shared) {
   return 'A new perspective to discover'
 }
 
-function BuddyCard({ buddy, category, onView, saved, onSave, requested, onRequest, showScore = false }) {
+function BuddyCard({ buddy, category, onView, saved, onSave, showScore = false }) {
   const shared = category === 'nationality' ? [countryName(buddy.nationality)] : (buddy.shared || [])
   return (
     <article className="buddy-card">
@@ -96,14 +96,11 @@ function BuddyCard({ buddy, category, onView, saved, onSave, requested, onReques
       <p className="buddy-affinity"><SparkIcon />{buddyAffinity(buddy, category, shared)}</p>
       <Tags values={shared.slice(0, 2)} className="shared-tags" empty="A new perspective to discover" />
       <ProfileSocials accounts={buddy.socialMedia} compact />
-      <button type="button" className={`buddy-request-button${requested ? ' is-requested' : ''}`} onClick={() => onRequest(buddy)} aria-pressed={requested} disabled={requested}>
-        <span aria-hidden="true">{requested ? '✓' : '👋'}</span>{requested ? 'Requested' : 'Say hi'}
-      </button>
       <button className="view-buddy" onClick={() => onView(buddy)}>Meet {buddy.name.split(' ')[0]} <ArrowIcon /></button>
     </article>
   )
 }
-function BuddyColumn({ title, category, description, matches, profile, onView, savedIds, onSave, requestedIds, onRequest }) {
+function BuddyColumn({ title, category, description, matches, profile, onView, savedIds, onSave }) {
   const [expanded, setExpanded] = useState(false)
   const visible = expanded ? matches : matches.slice(0, 3)
   const emptyMessage = category === 'nationality'
@@ -119,7 +116,7 @@ function BuddyColumn({ title, category, description, matches, profile, onView, s
         <p>{description}</p>
       </header>
       <div className="buddy-list">
-        {visible.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category={category} onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} requested={requestedIds.has(buddy.id)} onRequest={onRequest} />)}
+        {visible.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category={category} onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} />)}
         {!matches.length && <div className="buddy-empty"><p>{emptyMessage}</p><a href="#/edit-profile">Edit profile <span aria-hidden="true">&rarr;</span></a></div>}
       </div>
       {matches.length > 3 && <button className="column-more" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? 'Show fewer' : `See all ${matches.length} buddies`}</button>}
@@ -188,7 +185,7 @@ function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset,
   )
 }
 
-function BuddyResults({ matches, savedIds, onSave, onView, requestedIds, onRequest, isSaved, onReset, onDiscover, hasCriteria }) {
+function BuddyResults({ matches, savedIds, onSave, onView, isSaved, onReset, onDiscover, hasCriteria }) {
   return (
     <section className="buddy-filter-results" aria-labelledby="filtered-buddies-title">
       <div className="discovery-heading">
@@ -196,15 +193,15 @@ function BuddyResults({ matches, savedIds, onSave, onView, requestedIds, onReque
         <span className="results-count" role="status">{matches.length} {matches.length === 1 ? 'person' : 'people'}</span>
       </div>
       <div className="buddy-results-grid">
-        {matches.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category="filtered" onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} requested={requestedIds.has(buddy.id)} onRequest={onRequest} showScore />)}
-        {!matches.length && <div className="buddy-filter-empty"><div className="empty-state-icon">{isSaved ? <BookmarkIcon /> : <SearchIcon />}</div><h3>{isSaved && !savedIds.length ? 'Keep a good connection in mind.' : 'No matches just yet.'}</h3><p>{isSaved && !savedIds.length ? 'Tap the bookmark on a profile to find it here later.' : 'Try a different search or give your filters a little more room.'}</p><button className="filter-edit-button" onClick={hasCriteria ? onReset : onDiscover}>{hasCriteria ? 'Reset search and filters' : 'Discover buddies'}<ArrowIcon /></button></div>}
+        {matches.map((buddy) => <BuddyCard key={buddy.id} buddy={buddy} category="filtered" onView={onView} saved={savedIds.includes(buddy.id)} onSave={onSave} showScore />)}
+        {!matches.length && <div className="buddy-filter-empty"><div className="empty-state-icon">{isSaved ? <BookmarkIcon /> : <SearchIcon />}</div><h3>{isSaved && !savedIds.length ? 'Keep a good connection in mind.' : 'No matches just yet.'}</h3><p>{isSaved && !savedIds.length ? 'Tap the bookmark on a profile to find it here later.' : 'Try different filters, or give them a little more room.'}</p><button className="filter-edit-button" onClick={hasCriteria ? onReset : onDiscover}>{hasCriteria ? 'Reset filters' : 'Discover buddies'}<ArrowIcon /></button></div>}
       </div>
       {isSaved && matches.length > 0 && <p className="saved-note">Saved in this browser for your profile.</p>}
     </section>
   )
 }
 
-function SavedBuddies({ profile, filters, query, sort, onSave, onView, requestedIds, onRequest, onReset, onDiscover, hasCriteria }) {
+function SavedBuddies({ profile, filters, sort, onSave, onView, onReset, onDiscover, hasCriteria }) {
   const [storedBuddies, setStoredBuddies] = useState(() => readSavedBuddies(profile))
 
   useEffect(() => {
@@ -226,9 +223,9 @@ function SavedBuddies({ profile, filters, query, sort, onSave, onView, requested
   }, [profile, profile.id, profile.username])
 
   const savedIds = storedBuddies.map((buddy) => buddy.id)
-  const matches = searchBuddies(getFilteredBuddies(profile, filters, storedBuddies), query, countryNames)
+  const matches = getFilteredBuddies(profile, filters, storedBuddies)
   if (sort === 'name') matches.sort((a, b) => a.name.localeCompare(b.name))
-  return <BuddyResults matches={matches} savedIds={savedIds} onSave={onSave} onView={onView} requestedIds={requestedIds} onRequest={onRequest} isSaved onReset={onReset} onDiscover={onDiscover} hasCriteria={hasCriteria} />
+  return <BuddyResults matches={matches} savedIds={savedIds} onSave={onSave} onView={onView} isSaved onReset={onReset} onDiscover={onDiscover} hasCriteria={hasCriteria} />
 }
 
 function ProfilePanel({ profile, onEdit }) {
@@ -291,7 +288,6 @@ function BuddyDialog({ buddy, profile, onClose, saved, onSave }) {
   )
 }
 
-const countryNames = Object.fromEntries(countries.map(({ code, name }) => [code, name]))
 const filterLabel = ({ field, value }) => field === 'nationality' ? countryName(value) : field === 'year' ? yearName(value) : value
 
 const WORKSPACE_SECTIONS = [
@@ -332,7 +328,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
   const [userHangouts, setUserHangouts] = useState(readHangouts)
   const [goingIds, setGoingIds] = useState(() => new Set())
   const [selectedHangoutId, setSelectedHangoutId] = useState(null)
-  const [requestedIds, setRequestedIds] = useState(() => new Set())
 
   useEffect(() => {
     registerNavigate?.((nextSection) => setSection(nextSection))
@@ -343,7 +338,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
   const [draftFilters, setDraftFilters] = useState(emptyBuddyFilters)
   const [appliedFilters, setAppliedFilters] = useState(emptyBuddyFilters)
   const [view, setView] = useState('discover')
-  const [query, setQuery] = useState('')
   const [sort, setSort] = useState('common')
   const [savedBuddies, setSavedBuddies] = useState(() => readSavedBuddies(profile))
   const [feedback, setFeedback] = useState('')
@@ -373,7 +367,7 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
   const matches = getBuddyMatches(profile, buddies)
   const filteredBuddies = getFilteredBuddies(profile, appliedFilters, view === 'saved' ? savedBuddies : buddies)
   const choices = activeFilterChoices(appliedFilters)
-  const hasCriteria = choices.length > 0 || query.trim().length > 0
+  const hasCriteria = choices.length > 0
   const previewCount = filteredBuddies.length
   const showColumns = view === 'discover' && !hasCriteria
   const filterOptions = {
@@ -421,12 +415,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
     feedbackTimer.current = window.setTimeout(() => setFeedback(''), 4000)
   }
 
-  function requestBuddy(buddy) {
-    if (requestedIds.has(buddy.id)) return
-    setRequestedIds((previous) => new Set(previous).add(buddy.id))
-    showFeedback(`Demo request noted for ${buddy.name.split(' ')[0]}. No message was sent.`)
-  }
-
   function selectHangout(eventId) {
     setSelectedHangoutId(eventId)
     setSection('map')
@@ -465,7 +453,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
   }
 
   function clearFilters() {
-    setQuery('')
     setAppliedFilters(emptyBuddyFilters())
     setDraftFilters(emptyBuddyFilters())
   }
@@ -479,7 +466,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
   function quickFilter(field, value) {
     setAppliedFilters({ ...emptyBuddyFilters(), [field]: value })
     setView('all')
-    setQuery('')
   }
 
   return (
@@ -516,7 +502,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
                   {[['discover', 'For you'], ['all', 'Everyone'], ['saved', 'Saved']].map(([value, label]) => <button key={value} className={view === value ? 'is-active' : ''} aria-current={view === value ? 'page' : undefined} onClick={() => chooseView(value)}>{value === 'saved' && <BookmarkIcon filled={view === value} />}{label}{value === 'saved' && <span>{savedCount}</span>}</button>)}
                 </nav>
                 <div className="discovery-tools">
-                  <div className="buddy-search"><SearchIcon /><label className="sr-only" htmlFor="buddy-search">Search names, countries, majors, or interests</label><input id="buddy-search" type="search" placeholder="Name, country, interest..." value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button onClick={() => setQuery('')} aria-label="Clear search"><CloseIcon /></button>}</div>
                   <button className={`open-filters${choices.length ? ' has-filters' : ''}`} onClick={findBuddy}><FilterIcon /><span>Filters</span>{choices.length > 0 && <span className="filter-count">{choices.length}</span>}</button>
                 </div>
               </div>
@@ -527,14 +512,14 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
                 <label className="buddy-sort"><span className="sr-only">Sort buddies</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="common">Most in common</option><option value="name">Name: A to Z</option></select></label>
               </div>
               <div className="buddy-content-grid">
-                {view === 'saved' ? <SavedBuddies profile={profile} filters={appliedFilters} query={query} sort={sort} onSave={toggleSave} onView={setSelectedBuddy} requestedIds={requestedIds} onRequest={requestBuddy} onReset={clearFilters} onDiscover={() => chooseView('discover')} hasCriteria={hasCriteria} /> : showColumns ? <section className="buddy-discovery" aria-labelledby="discovery-title">
+                {view === 'saved' ? <SavedBuddies profile={profile} filters={appliedFilters} sort={sort} onSave={toggleSave} onView={setSelectedBuddy} onReset={clearFilters} onDiscover={() => chooseView('discover')} hasCriteria={hasCriteria} /> : showColumns ? <section className="buddy-discovery" aria-labelledby="discovery-title">
                   <div className="discovery-heading"><div><h2 id="discovery-title">A few things in common</h2><p>Start with something familiar. Discover someone new.</p></div><span className="curated-mark"><SparkIcon />Picked for you</span></div>
                   <div className="buddy-columns">
-                    <BuddyColumn title="Nationality" category="nationality" description={`A little closer to ${countryName(profile.nationality)}.`} matches={matches.nationality} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} requestedIds={requestedIds} onRequest={requestBuddy} />
-                    <BuddyColumn title="Sport" category="sports" description="A teammate for your next game." matches={matches.sports} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} requestedIds={requestedIds} onRequest={requestBuddy} />
-                    <BuddyColumn title="Hobbies" category="hobbies" description="Good company for your favorite things." matches={matches.hobbies} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} requestedIds={requestedIds} onRequest={requestBuddy} />
+                    <BuddyColumn title="Nationality" category="nationality" description={`A little closer to ${countryName(profile.nationality)}.`} matches={matches.nationality} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} />
+                    <BuddyColumn title="Sport" category="sports" description="A teammate for your next game." matches={matches.sports} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} />
+                    <BuddyColumn title="Hobbies" category="hobbies" description="Good company for your favorite things." matches={matches.hobbies} profile={profile} onView={setSelectedBuddy} savedIds={savedIds} onSave={toggleSave} />
                   </div>
-                </section> : <BuddyResults matches={filteredBuddies} savedIds={savedIds} onSave={toggleSave} onView={setSelectedBuddy} requestedIds={requestedIds} onRequest={requestBuddy} hasCriteria={hasCriteria} onReset={clearFilters} onDiscover={() => chooseView('discover')} />}
+                </section> : <BuddyResults matches={filteredBuddies} savedIds={savedIds} onSave={toggleSave} onView={setSelectedBuddy} hasCriteria={hasCriteria} onReset={clearFilters} onDiscover={() => chooseView('discover')} />}
                 <ProfilePanel profile={profile} onEdit={onEdit} />
               </div>
             </section>

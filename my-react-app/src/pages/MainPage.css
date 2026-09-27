@@ -234,10 +234,6 @@
 .map-all-hangouts svg { width: 14px; height: 14px; }
 .map-rsvp-note { margin: 9px 0 0; color: #8b95a3; font-size: 8px; line-height: 1.5; }
 .profile-standalone .profile-panel { width: min(100%, 620px); }
-.buddy-request-button { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 38px; margin-top: 13px; border: 0; border-radius: 9px; background: #2457d6; color: #fff; font-size: 11px; font-weight: 650; cursor: pointer; transition: background 160ms, transform 160ms, box-shadow 160ms; }
-.buddy-request-button:hover { background: #1942ad; transform: translateY(-1px); box-shadow: 0 5px 12px #2457d62b; }
-.buddy-request-button.is-requested, .buddy-request-button:disabled { background: #2d8a5c; cursor: default; transform: none; box-shadow: none; }
-.buddy-request-button > span { font-size: 14px; line-height: 1; }
 .buddy-affinity { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; margin: 9px 0 0; padding: 5px 8px; border-radius: 20px; background: #fff8e5; color: #795714; font-size: 9px; font-weight: 620; line-height: 1.4; }
 .buddy-affinity svg { flex: 0 0 auto; width: 12px; height: 12px; }
 .buddy-card { transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease; }
@@ -287,7 +283,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .workspace-page { animation: none; }
-  .workspace-nav > button, .buddy-card, .buddy-request-button, .buddy-toast { transition: none; }
+  .workspace-nav > button, .buddy-card, .buddy-toast { transition: none; }
 }
 .profile-update-notice {
   display: flex;

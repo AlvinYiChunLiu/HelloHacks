@@ -22,13 +22,7 @@
 .discovery-tabs button.is-active { background: var(--theme-soft); color: var(--theme-text); }
 .discovery-tabs button svg { width: 14px; height: 14px; }
 .discovery-tabs button > span { min-width: 19px; padding: 2px 5px; border-radius: 6px; background: #f0f0f0; font-size: 10px; }
-.discovery-tools { display: flex; align-items: center; gap: 9px; }
-.buddy-search { display: flex; align-items: center; gap: 9px; width: clamp(210px, 25vw, 340px); min-width: 0; padding: 0 12px; border: 1px solid #d9d9d9; border-radius: 10px; background: #fff; color: var(--muted); }
-.buddy-search:focus-within { outline: 2px solid var(--theme-focus); outline-offset: 2px; }
-.buddy-search svg { flex-shrink: 0; width: 18px; height: 18px; }
-.buddy-search input { width: 100%; min-width: 0; height: 43px; border: 0; outline: none !important; background: transparent; color: var(--ink); font-size: 13px; }
-.buddy-search input::-webkit-search-cancel-button { display: none; }
-.buddy-search button { display: grid; place-items: center; padding: 3px; border: 0; background: transparent; color: var(--muted); }
+.discovery-tools { display: flex; align-items: center; justify-content: flex-end; }
 .open-filters { display: flex; align-items: center; gap: 8px; min-height: 45px; padding: 9px 13px; border: 1px solid #d9d9d9; border-radius: 10px; background: #fff; color: var(--ink); font-size: 12px; font-weight: 600; }
 .open-filters > svg { width: 18px; height: 18px; }
 .open-filters:hover, .open-filters.has-filters { border-color: var(--theme-text); color: var(--theme-text); }
@@ -132,7 +126,6 @@
   .personal-theme .buddy-card-heading { flex-wrap: nowrap; }
   .discovery-toolbar { gap: 12px; }
   .discovery-tabs button { padding-inline: 12px; }
-  .buddy-search { width: 225px; }
 }
 @media (max-width: 700px) {
   .personal-theme .dashboard-intro { margin-bottom: 23px; padding: 28px 15px 25px; border-radius: 20px; }
@@ -143,8 +136,6 @@
   .discovery-tabs { justify-content: space-between; }
   .discovery-tabs button { flex: 1; justify-content: center; min-height: 43px; }
   .discovery-tools { width: 100%; }
-  .buddy-search { flex: 1; width: auto; }
-  .buddy-search input { font-size: 16px; }
   .discovery-options { flex-wrap: wrap; padding-block: 12px 20px; gap: 5px; }
   .quick-filters { gap: 6px; }
   .quick-filters > span { flex-basis: 100%; }
