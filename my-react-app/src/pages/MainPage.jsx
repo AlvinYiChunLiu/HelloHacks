@@ -181,7 +181,7 @@ function BuddyFilterDialog({ open, filters, options, onChange, onClose, onReset,
           <FilterPills selectedSports={filters.sports} selectedHobbies={filters.hobbies} onSportsChange={(value) => setField('sports', value)} onHobbiesChange={(value) => setField('hobbies', value)} />
           <div className="buddy-filter-actions">
             <button type="button" className="dashboard-secondary" onClick={onReset}>Clear choices</button>
-            <button type="submit" className="filter-submit">Show {resultCount} {resultCount === 1 ? 'buddy' : 'buddies'} <ArrowIcon /></button>
+            <button type="submit" className="filter-submit">Show buddies <ArrowIcon /></button>
           </div>
         </form>
       </div>
@@ -512,7 +512,6 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
             <section className="workspace-page buddies-workspace" aria-labelledby="buddies-page-title">
               <header className="workspace-page-header">
                 <div><p className="eyebrow">A LITTLE COMMON GROUND</p><h2 id="buddies-page-title" ref={titleRef} tabIndex={-1}>Find buddies</h2><p>Meet someone who shares a piece of your campus life.</p></div>
-                <button type="button" className="workspace-primary-button" onClick={findBuddy}><FilterIcon /> Choose filters</button>
               </header>
               <div className="discovery-toolbar">
                 <nav className="discovery-tabs" aria-label="Browse buddies">
