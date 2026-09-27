@@ -27,7 +27,7 @@ Vite forwards `/api` requests to `http://127.0.0.1:5000` in development and prev
 ## Current flow
 
 - `#/`: Welcome page with Create profile and Sign in.
-- `#/create-profile`: Seven steps: favorite color; About you (name, username, birthday, profile picture, and gender); Nationality (country and languages); UBC Vancouver campus details; optional hobbies/sports; optional social media; then password.
+- `#/create-profile`: Seven steps: favorite color; About you (name, username, profile picture, and gender); Nationality (country and languages); UBC Vancouver campus details; optional hobbies/sports; optional social media; then password.
 - `#/main`: Three columns of fictional buddies with the same nationality, sports, or hobbies, plus an editable profile panel. **Find buddy** opens filters for nationality, campus details, interests, languages, and social platforms. Cards open profile previews; messaging is not implemented.
 - `#/edit-profile`: Edit the same six public-profile sections, including picture, gender, country, languages, and social accounts. Saving refreshes the dashboard and its matches.
 - `#/sign-in`: Frontend test login with `dev` / `dev`. Real account sign-in is still pending.
@@ -36,7 +36,7 @@ Signup starts with a neutral page and 30 visible color swatches. Choosing a colo
 
 About you supports a local photo or one of five smiley expressions. Photos are resized to a square thumbnail in the browser and never uploaded. Gender has Male, Female, and Prefer not to choices; the private choice adds no gender row to public profiles. Country and multiple spoken languages are collected in the separate Nationality step. Selected social platforms and usernames appear in the profile panel and buddy previews, with a compact summary on cards.
 
-Registration retains the existing `POST /api/profiles` integration and generated account-email convention. Favorite color, languages, gender, and avatar are retained by the frontend without adding fields to the existing registration API payload. The existing social-media payload is preserved. The backend is unchanged.
+Registration uses the existing `POST /api/profiles` integration and generated account-email convention. Favorite color, languages, gender, and avatar are retained by the frontend without adding fields to the registration API payload. The backend stores campus details and interests for account profiles.
 
 Active profiles and edits are stored in `sessionStorage` for the current browser tab. Reloading retains the active profile; signing out clears it. Profile edits do not update backend records or account credentials. Passwords are never stored in browser storage. Signup drafts also persist in this tab, excluding the password. Reloading or returning to signup restores the answers and current step; successful registration or Start over clears the draft. Edit mode starts on About you and offers Save changes or Cancel from every section.
 
@@ -58,7 +58,7 @@ Active profiles and edits are stored in `sessionStorage` for the current browser
 - `src/components/ProfileAvatar.jsx`, `ProfilePicturePicker.jsx`, and `SmileyFace.jsx`: Local photo selection and five smiley expressions.
 - `src/components/ProfileSocials.jsx` and `CountryFlag.jsx`: Shared social-account and nationality displays.
 - `src/theme.css` and `src/lib/theme.js`: Scoped personal themes, readable color variants, and motion.
-- `src/lib/profile.js`: Age calculation, validation, and form helpers.
+- `src/lib/profile.js`: Profile validation and form helpers.
 - `src/lib/profileSession.js`: Public profile session storage and the dev profile.
 - `src/lib/buddies.js`: Nationality and interest matching.
 - `src/lib/discovery.js`: Search, filter chips, bookmarks, and conversation starters.

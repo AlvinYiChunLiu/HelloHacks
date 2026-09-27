@@ -9,7 +9,7 @@ import LanguagePicker from '../components/LanguagePicker'
 import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
 import { SOCIAL_PLATFORMS } from '../data/socialPlatforms'
-import { emptyProfile, getAge, HOBBIES, profileChanges, profileDraft, registrationPayload, SPORTS, stepForField, UNIVERSITY, validateStep } from '../lib/profile'
+import { emptyProfile, HOBBIES, profileChanges, profileDraft, registrationPayload, SPORTS, stepForField, UNIVERSITY, validateStep } from '../lib/profile'
 import './CreateProfile.css'
 
 const STEPS = [
@@ -34,16 +34,6 @@ const majorOptions = [
 ].sort(alphabetical)
 const validationOptions = { countries, residences: residenceOptions, majors: majorOptions }
 const YEARS = ['1st year', '2nd year', '3rd year', '4th year', '5th year', '6th year']
-
-function birthdayForAge(value) {
-  const years = Number(value)
-  if (!Number.isInteger(years) || years < 16 || years > 100) return ''
-  const today = new Date()
-  const year = today.getFullYear() - years
-  const month = today.getMonth()
-  const day = Math.min(today.getDate(), new Date(year, month + 1, 0).getDate())
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
 
 function Field({ name, label, error, hint, children }) {
   return (
@@ -139,11 +129,6 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
   const steps = isEditing ? STEPS.slice(0, -1) : STEPS
   const [restoredDraft, setRestoredDraft] = useState(() => isEditing ? null : readRegistrationDraft())
   const [profile, setProfile] = useState(() => isEditing ? profileDraft(initialProfile) : restoredDraft?.profile || emptyProfile())
-  const [ageInput, setAgeInput] = useState(() => {
-    const initialBirthday = isEditing ? initialProfile?.birthday : restoredDraft?.profile?.birthday
-    const initialAge = getAge(initialBirthday)
-    return initialAge === null ? '' : String(initialAge)
-  })
   const [step, setStep] = useState(isEditing ? 1 : restoredDraft?.step || 0)
   const [furthestStep, setFurthestStep] = useState(restoredDraft?.step || 0)
   const [errors, setErrors] = useState({})
@@ -155,7 +140,6 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
   const formRef = useRef(null)
   const requestRef = useRef(null)
   const current = steps[step]
-  const age = getAge(profile.birthday)
 
   useEffect(() => {
     onColorChange?.(profile.favoriteColor)
@@ -183,7 +167,6 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
   function startOver() {
     clearRegistrationDraft()
     setProfile(emptyProfile())
-    setAgeInput('')
     setStep(0)
     setFurthestStep(0)
     setErrors({})
@@ -319,9 +302,6 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
                 </Field>
                 <Field name="username" label="Username" error={errors.username} hint="3–24 letters, numbers, or underscores.">
                   <div className="username-input"><span aria-hidden="true">@</span><input {...inputProps('username', true)} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={24} placeholder="your_username" /></div>
-                </Field>
-                  <Field name="birthday" label="Age" error={errors.birthday} hint="We’ll use an approximate birthday based on the age you enter.">
-                  <div className="age-entry"><input {...inputProps('birthday', true)} type="number" min="16" max="100" step="1" autoComplete="off" placeholder="e.g. 19" value={ageInput} onChange={(event) => { setAgeInput(event.target.value); update('birthday', birthdayForAge(event.target.value)) }} /><span>years old</span></div>
                 </Field>
                 <ProfilePicturePicker value={profile.avatar} onChange={(value) => update('avatar', value)} profileName={profile.name} color={profile.favoriteColor} onPreparingChange={setPreparingPhoto} />
                 <fieldset className="gender-picker" aria-describedby={errors.gender ? 'gender-error' : 'gender-hint'}>

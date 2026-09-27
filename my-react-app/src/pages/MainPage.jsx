@@ -10,7 +10,7 @@ import countries from '../data/countries.json'
 import ubcOptions from '../data/ubcOptions.json'
 import { LANGUAGES, PROFILE_COLORS } from '../data/profileOptions'
 import { emptyBuddyFilters, getBuddyMatches, getFilteredBuddies, getSharedProfileTraits } from '../lib/buddies'
-import { getAge, HOBBIES, SPORTS } from '../lib/profile'
+import { HOBBIES, SPORTS } from '../lib/profile'
 import CampusMap from '../components/CampusMap'
 import HangoutsBoard, { HangoutCard } from '../components/HangoutsBoard'
 import { readHangouts, saveHangouts, sortHangouts } from '../lib/hangouts'
@@ -34,7 +34,6 @@ function normalizeBackendUser(user) {
     name: user.name || 'Unknown user',
     username: user.username || `user_${user.id}`,
     nationality: user.nationality || '',
-    birthday: user.birthday || '2000-01-01',
     gender: 'prefer-not-to',
     university: user.university || 'University of British Columbia',
     residence: user.residence || 'Not selected',
@@ -233,7 +232,6 @@ function SavedBuddies({ profile, filters, query, sort, onSave, onView, requested
 }
 
 function ProfilePanel({ profile, onEdit }) {
-  const age = getAge(profile.birthday)
   const colorName = PROFILE_COLORS.find((color) => color.value.toLowerCase() === profile.favoriteColor.toLowerCase())?.name || 'Your color'
   return (
     <aside className="profile-panel" aria-labelledby="your-profile-title">
@@ -241,7 +239,7 @@ function ProfilePanel({ profile, onEdit }) {
       <div className="profile-panel-identity">
         <ProfileAvatar profile={profile} size="large" />
         <h2>{profile.name || 'Your name'}</h2>
-        <p>@{profile.username || 'username'}{age !== null && <span> &middot; {age} years old</span>}</p>
+        <p>@{profile.username || 'username'}</p>
         <div className="profile-country"><CountryFlag code={profile.nationality} /><span>{countryName(profile.nationality)}</span></div>
       </div>
       <button className="edit-profile-button" onClick={onEdit}><EditIcon />Edit profile</button>
@@ -278,7 +276,7 @@ function BuddyDialog({ buddy, profile, onClose, saved, onSave }) {
         <p className="eyebrow">{shared.length ? 'A little common ground' : 'Meet a new face'}</p>
         <ProfileAvatar profile={buddy} size="large" />
         <h2 id="buddy-dialog-title">{buddy.name}</h2>
-        <p className="buddy-dialog-handle">@{buddy.username} <span aria-hidden="true">&middot;</span> {getAge(buddy.birthday)} years old</p>
+        <p className="buddy-dialog-handle">@{buddy.username}</p>
         <div className="profile-country"><CountryFlag code={buddy.nationality} /><span>{countryName(buddy.nationality)}</span></div>
         <p className="buddy-bio">{buddy.bio}</p>
         <dl className="buddy-dialog-details"><div><dt>Studies</dt><dd>{buddy.major} &middot; {yearName(buddy.year)}</dd></div><div><dt>Residence</dt><dd>{buddy.residence}</dd></div><div><dt>Languages</dt><dd>{buddy.languages.join(', ')}</dd></div>{genderName(buddy.gender) && <div><dt>Gender</dt><dd>{genderName(buddy.gender)}</dd></div>}</dl>

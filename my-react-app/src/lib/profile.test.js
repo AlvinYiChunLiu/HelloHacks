@@ -1,22 +1,17 @@
 import assert from 'node:assert/strict'
-import { spawnSync } from 'node:child_process'
-import { env, execPath } from 'node:process'
 import test from 'node:test'
 import {
   emptyProfile,
-  getAge,
   registrationPayload,
   profileChanges,
   profileDraft,
   stepForField,
-  todayDate,
   UNIVERSITY,
   validateStep,
 } from './profile.js'
 
 import { DEFAULT_PROFILE_COLOR, LANGUAGES, PROFILE_COLORS } from '../data/profileOptions.js'
 
-const today = new Date(2026, 8, 26, 12)
 const options = {
   countries: [{ code: 'CA', name: 'Canada' }, { code: 'JP', name: 'Japan' }],
   residences: [{ value: 'Totem Park' }, { value: 'Off campus / commuting' }],
@@ -31,7 +26,6 @@ function validProfile(overrides = {}) {
     gender: 'prefer-not-to',
     name: 'Alex Taylor',
     username: 'alex_taylor',
-    birthday: '2005-09-26',
     nationality: 'CA',
     residence: 'Totem Park',
     year: '2',
@@ -42,53 +36,8 @@ function validProfile(overrides = {}) {
 }
 
 function errorsFor(step, overrides) {
-  return validateStep(step, validProfile(overrides), options, today)
+  return validateStep(step, validProfile(overrides), options)
 }
-
-test('age changes on the birthday, with the preceding and following days handled correctly', () => {
-  assert.equal(getAge('2005-09-26', new Date(2026, 8, 25)), 20)
-  assert.equal(getAge('2005-09-26', new Date(2026, 8, 26)), 21)
-  assert.equal(getAge('2005-09-26', new Date(2026, 8, 27)), 21)
-  assert.equal(getAge('2005-12-31', new Date(2026, 0, 1)), 20)
-  assert.equal(getAge('2005-01-01', new Date(2026, 11, 31)), 21)
-})
-
-test('birthday validation rejects malformed, impossible, future, and unsupported dates', () => {
-  for (const birthday of ['', '2005-9-26', '26/09/2005', 'invalid', '2005-00-26', '2005-13-01', '2005-04-31', '2005-09-00', '1900-02-29', '1899-12-31', '2026-09-27', '2030-01-01']) {
-    assert.equal(getAge(birthday, today), null, birthday)
-  }
-  assert.equal(getAge('1900-01-01', today), 126)
-  assert.equal(getAge('2026-09-26', today), 0)
-})
-
-test('leap birthdays stay valid and increment after February in non-leap years', () => {
-  assert.equal(getAge('2004-02-29', new Date(2024, 1, 28)), 19)
-  assert.equal(getAge('2004-02-29', new Date(2024, 1, 29)), 20)
-  assert.equal(getAge('2004-02-29', new Date(2025, 1, 28)), 20)
-  assert.equal(getAge('2004-02-29', new Date(2025, 2, 1)), 21)
-  assert.equal(getAge('2000-02-29', today), 26)
-  assert.equal(getAge('2005-02-29', today), null)
-})
-
-test('todayDate formats local calendar values with zero padding', () => {
-  assert.equal(todayDate(new Date(2026, 0, 3)), '2026-01-03')
-  assert.equal(todayDate(new Date(2026, 11, 31)), '2026-12-31')
-})
-
-test('age and the maximum birthday use Vancouver local date near UTC midnight', () => {
-  const moduleUrl = new URL('./profile.js', import.meta.url).href
-  const script = `
-    import { getAge, todayDate } from ${JSON.stringify(moduleUrl)};
-    const now = new Date('2026-09-27T06:30:00Z');
-    console.log(JSON.stringify({ date: todayDate(now), age: getAge('2000-09-27', now), future: getAge('2026-09-27', now) }));
-  `
-  const result = spawnSync(execPath, ['--input-type=module', '--eval', script], {
-    env: { ...env, TZ: 'America/Vancouver' },
-    encoding: 'utf8',
-  })
-  assert.equal(result.status, 0, result.stderr)
-  assert.deepEqual(JSON.parse(result.stdout), { date: '2026-09-26', age: 25, future: null })
-})
 
 test('new profiles have UBC selected and independent empty interest arrays', () => {
   const first = emptyProfile()
@@ -104,11 +53,11 @@ test('new profiles have UBC selected and independent empty interest arrays', () 
 
 test('a complete profile passes every step and interests can be skipped', () => {
   for (const step of [0, 1, 2, 3, 4, 5, 6]) assert.deepEqual(errorsFor(step, {}), {})
-  assert.deepEqual(validateStep(4, emptyProfile(), options, today), {})
+  assert.deepEqual(validateStep(4, emptyProfile(), options), {})
 })
 
 test('about-you step reports each missing field without validating later steps', () => {
-  assert.deepEqual(Object.keys(validateStep(1, emptyProfile(), options, today)).sort(), ['birthday', 'gender', 'name', 'username'])
+  assert.deepEqual(Object.keys(validateStep(1, emptyProfile(), options)).sort(), ['gender', 'name', 'username'])
   assert.deepEqual(errorsFor(1, { email: '', password: '', residence: '', major: '', year: '' }), {})
   assert.ok(errorsFor(1, { name: '   ' }).name)
   assert.ok(errorsFor(1, { name: 'a'.repeat(81) }).name)
@@ -124,13 +73,11 @@ test('usernames support the stated characters and length after surrounding white
   }
 })
 
-test('nationality must match a country code and birthday errors use the supplied current date', () => {
+test('nationality must match a country code', () => {
   assert.deepEqual(errorsFor(2, { nationality: 'JP' }), {})
   for (const nationality of ['', 'Canada', 'ca', 'ZZ']) {
     assert.ok(errorsFor(2, { nationality }).nationality, nationality)
   }
-  assert.ok(errorsFor(1, { birthday: '2026-09-27' }).birthday)
-  assert.ok(errorsFor(1, { birthday: '2005-02-29' }).birthday)
 })
 
 test('campus details require the supported university and listed residence and major values', () => {
@@ -170,7 +117,7 @@ test('password validation enforces the 8-128 character boundaries', () => {
 
 test('server field errors return users to the corresponding seven-step profile section', () => {
   assert.equal(stepForField('favoriteColor'), 0)
-  for (const field of ['name', 'username', 'birthday', 'avatar', 'gender']) assert.equal(stepForField(field), 1, field)
+  for (const field of ['name', 'username', 'avatar', 'gender']) assert.equal(stepForField(field), 1, field)
   for (const field of ['nationality', 'languages']) assert.equal(stepForField(field), 2, field)
   for (const field of ['university', 'residence', 'year', 'major']) assert.equal(stepForField(field), 3, field)
   for (const field of ['hobbies', 'sports']) assert.equal(stepForField(field), 4, field)
@@ -243,7 +190,7 @@ test('edit drafts prefill public fields and make independent arrays without reta
   const draft = profileDraft(original)
   assert.equal(draft.password, '')
   assert.equal(draft.year, '2')
-  for (let step = 0; step < 6; step += 1) assert.deepEqual(validateStep(step, draft, options, today), {})
+  for (let step = 0; step < 6; step += 1) assert.deepEqual(validateStep(step, draft, options), {})
   draft.languages.push('Spanish')
   draft.socialMedia[0].username = 'new_name'
   assert.deepEqual(original.languages, ['English', 'French'])
@@ -266,9 +213,9 @@ test('local edits retain all public details, normalize names, and omit password 
 
 test('nationality and language choices are required in their own section only', () => {
   const profile = validProfile({ nationality: '', languages: [] })
-  assert.deepEqual(validateStep(1, profile, options, today), {})
-  assert.deepEqual(Object.keys(validateStep(2, profile, options, today)).sort(), ['languages', 'nationality'])
-  assert.deepEqual(errorsFor(2, { name: '', username: '', birthday: '', gender: '' }), {})
+  assert.deepEqual(validateStep(1, profile, options), {})
+  assert.deepEqual(Object.keys(validateStep(2, profile, options)).sort(), ['languages', 'nationality'])
+  assert.deepEqual(errorsFor(2, { name: '', username: '', gender: '' }), {})
 })
 
 test('gender requires one of three choices and old edit drafts keep it private', () => {

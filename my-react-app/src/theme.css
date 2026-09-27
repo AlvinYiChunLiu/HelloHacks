@@ -125,7 +125,7 @@
   color: #686868;
 }
 
-.personal-theme :is(.age-badge:not(.is-empty), .signup-summary, .selected-languages li, .edit-profile-button, .filter-edit-button, .profile-update-notice) {
+.personal-theme :is(.signup-summary, .selected-languages li, .edit-profile-button, .filter-edit-button, .profile-update-notice) {
   border-color: var(--theme-border);
   background: var(--theme-soft);
   color: var(--theme-text);

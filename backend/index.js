@@ -37,7 +37,6 @@ function ensureUsersTable() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         username TEXT NOT NULL UNIQUE,
-        birthday TEXT NOT NULL,
         nationality TEXT NOT NULL,
         university TEXT NOT NULL,
         residence TEXT NOT NULL,
@@ -215,7 +214,6 @@ app.post('/api/login', async (req, res) => {
           id: row.id,
           name: row.name,
           username: row.username,
-          birthday: row.birthday,
           nationality: row.nationality,
           university: row.university,
           residence: row.residence,
@@ -242,7 +240,7 @@ app.post('/api/users', async (req, res) => {
     return res.status(400).json({ field: 'body', error: 'A valid user body is required.' });
   }
 
-  const requiredFields = ['name', 'username', 'birthday', 'nationality', 'university', 'residence', 'year', 'major', 'email', 'password'];
+  const requiredFields = ['name', 'username', 'nationality', 'university', 'residence', 'year', 'major', 'email', 'password'];
   for (const field of requiredFields) {
     if (body[field] === undefined || body[field] === null || (typeof body[field] === 'string' && !body[field].trim())) {
       return res.status(400).json({ field, error: `${field} is required.` });
@@ -252,7 +250,6 @@ app.post('/api/users', async (req, res) => {
   const name = String(body.name).trim();
   const username = String(body.username).trim().toLowerCase();
   const email = String(body.email).trim().toLowerCase();
-  const birthday = String(body.birthday).trim();
   const nationality = String(body.nationality).trim().toUpperCase();
   const university = String(body.university).trim();
   const residence = String(body.residence).trim();
@@ -268,10 +265,6 @@ app.post('/api/users', async (req, res) => {
     return res.status(400).json({ field: 'username', error: 'Use 3–24 letters, numbers, or underscores.' });
   }
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday)) {
-    return res.status(400).json({ field: 'birthday', error: 'Use a valid birthday in YYYY-MM-DD format.' });
-  }
-
   if (String(year) === 'NaN' || !Number.isInteger(year) || year < 1 || year > 6) {
     return res.status(400).json({ field: 'year', error: 'Year must be between 1 and 6.' });
   }
@@ -285,18 +278,23 @@ app.post('/api/users', async (req, res) => {
     return res.status(400).json({ field: 'email', error: 'Enter a valid email address.' });
   }
 
-  const salt = randomBytes(16).toString('hex');
-  const derivedKey = await scryptAsync(password, salt, 64, SCRYPT_OPTIONS);
-  const passwordHash = `scrypt$${SCRYPT_OPTIONS.N}$${SCRYPT_OPTIONS.r}$${SCRYPT_OPTIONS.p}$${salt}$${derivedKey.toString('hex')}`;
+  let passwordHash;
+  try {
+    const salt = randomBytes(16).toString('hex');
+    const derivedKey = await scryptAsync(password, salt, 64, SCRYPT_OPTIONS);
+    passwordHash = `scrypt$${SCRYPT_OPTIONS.N}$${SCRYPT_OPTIONS.r}$${SCRYPT_OPTIONS.p}$${salt}$${derivedKey.toString('hex')}`;
+  } catch (error) {
+    console.error('Password hashing failed:', error.message);
+    return res.status(500).json({ error: 'Unable to secure your password. Please try again.' });
+  }
 
   const insertSql = `INSERT INTO users (
-    name, username, birthday, nationality, university, residence, year, major, hobbies, sports, languages, email, password_hash, social_media
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    name, username, nationality, university, residence, year, major, hobbies, sports, languages, email, password_hash, social_media
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const values = [
     name,
     username,
-    birthday,
     nationality,
     university,
     residence,
@@ -320,6 +318,7 @@ app.post('/api/users', async (req, res) => {
         return res.status(409).json({ field: 'email', error: 'That email is already in use.' });
       }
 
+      console.error('Profile insert failed:', error.message);
       return res.status(500).json({ error: 'Unable to save your profile.' });
     }
 
@@ -328,7 +327,6 @@ app.post('/api/users', async (req, res) => {
         id: this.lastID,
         name,
         username,
-        birthday,
         nationality,
         university,
         residence,

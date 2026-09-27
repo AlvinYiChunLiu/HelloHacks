@@ -26,7 +26,6 @@ export function normalizeProfile(profile) {
     isDev: source.isDev === true,
     name: text(source.name, 80),
     username: text(source.username, 24),
-    birthday: text(source.birthday, 10),
     gender: ['male', 'female', 'prefer-not-to'].includes(source.gender) ? source.gender : 'prefer-not-to',
     avatar: normalizeAvatar(source.avatar),
     nationality: text(source.nationality, 2),

@@ -50,7 +50,7 @@ test('missing real-profile details remain empty without dev demographic defaults
   assert.equal(profile.id, 42)
   assert.equal(profile.name, 'Alice')
   assert.equal(profile.isDev, false)
-  for (const field of ['birthday', 'nationality', 'university', 'residence', 'year', 'major']) {
+  for (const field of ['nationality', 'university', 'residence', 'year', 'major']) {
     assert.equal(profile[field], '', field)
   }
   for (const field of ['hobbies', 'sports', 'languages', 'socialMedia']) assert.deepEqual(profile[field], [])

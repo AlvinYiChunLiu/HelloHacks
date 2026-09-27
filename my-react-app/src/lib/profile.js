@@ -17,28 +17,15 @@ export const SPORTS = [
   'Volleyball', 'Weight training',
 ]
 
-export function todayDate(today = new Date()) {
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
-
-export function getAge(birthday, today = new Date()) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday)) return null
-  const [year, month, day] = birthday.split('-').map(Number)
-  const birthDate = new Date(year, month - 1, day)
-  if (year < 1900 || birthDate.getFullYear() !== year || birthDate.getMonth() !== month - 1 || birthDate.getDate() !== day || birthday > todayDate(today)) return null
-  const birthdayIsAhead = today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)
-  return today.getFullYear() - year - Number(birthdayIsAhead)
-}
-
 export function emptyProfile() {
   return {
-    favoriteColor: '', name: '', username: '', birthday: '', gender: '', avatar: null, nationality: '', languages: [],
+    favoriteColor: '', name: '', username: '', gender: '', avatar: null, nationality: '', languages: [],
     university: UNIVERSITY, residence: '', year: '', major: '',
     hobbies: [], sports: [], socialMedia: [], password: '',
   }
 }
 
-export function validateStep(step, profile, options, today = new Date()) {
+export function validateStep(step, profile, options) {
   const errors = {}
   if (step === 0 && !PROFILE_COLORS.some((color) => color.value === profile.favoriteColor)) {
     errors.favoriteColor = 'Choose your favorite color.'
@@ -47,8 +34,6 @@ export function validateStep(step, profile, options, today = new Date()) {
     if (!profile.name.trim()) errors.name = 'Please enter your name.'
     else if (profile.name.trim().length > 80) errors.name = 'Use 80 characters or fewer.'
     if (!/^[a-zA-Z0-9_]{3,24}$/.test(profile.username.trim())) errors.username = 'Use 3–24 letters, numbers, or underscores.'
-    const age = getAge(profile.birthday, today)
-    if (age === null || age < 16 || age > 100) errors.birthday = 'Enter an age between 16 and 100.'
     if (!['male', 'female', 'prefer-not-to'].includes(profile.gender)) errors.gender = 'Choose a gender option, or prefer not to say.'
   }
   if (step === 2) {
@@ -71,7 +56,6 @@ export function registrationPayload(profile) {
   const username = profile.username.trim().toLowerCase()
   return {
     name: profile.name.trim(),
-    birthday: profile.birthday,
     nationality: profile.nationality,
     university: profile.university,
     residence: profile.residence,
@@ -90,7 +74,7 @@ export function registrationPayload(profile) {
 
 export function stepForField(field) {
   if (field === 'favoriteColor') return 0
-  if (['name', 'username', 'birthday', 'avatar', 'gender'].includes(field)) return 1
+  if (['name', 'username', 'avatar', 'gender'].includes(field)) return 1
   if (['nationality', 'languages'].includes(field)) return 2
   if (['university', 'residence', 'year', 'major'].includes(field)) return 3
   if (['hobbies', 'sports'].includes(field)) return 4
@@ -101,7 +85,7 @@ export function stepForField(field) {
 // Build an independent form draft; credentials are never prefilled for editing.
 export function profileDraft(initialProfile = {}) {
   const draft = emptyProfile()
-  for (const field of ['name', 'username', 'birthday', 'nationality', 'university', 'residence', 'major']) {
+  for (const field of ['name', 'username', 'nationality', 'university', 'residence', 'major']) {
     if (typeof initialProfile[field] === 'string') draft[field] = initialProfile[field]
   }
   draft.year = initialProfile.year ? String(initialProfile.year) : ''
@@ -123,7 +107,6 @@ export function profileChanges(profile) {
     favoriteColor: profile.favoriteColor,
     name: profile.name.trim(),
     username: profile.username.trim().toLowerCase(),
-    birthday: profile.birthday,
     gender: profile.gender,
     avatar: normalizeAvatar(profile.avatar),
     nationality: profile.nationality,
