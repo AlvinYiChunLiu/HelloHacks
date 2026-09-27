@@ -1,9 +1,32 @@
 import { useState } from 'react'
 import { ArrowIcon, CloseIcon } from './Icons'
-import { findHangoutLocation, sortHangouts, createHangoutId } from '../lib/hangouts'
+import { sortHangouts, createHangoutId } from '../lib/hangouts'
+import { UBC_LOCATIONS } from '../data/ubcLocations'
 import './HangoutsBoard.css'
 
 const EMPTY_HANGOUT = { title: '', location: '', description: '', startsAt: '', endsAt: '' }
+const MAX_LOCATION_RESULTS = 14
+const POPULAR_LOCATION_ORDER = [
+  'building-vbl10407',
+  'building-vbl10080',
+  'building-vbl10125',
+  'building-vbl10248',
+  'building-vbl10071',
+  'building-vbl10154',
+  'building-vbl10065',
+  'building-vbl10161',
+]
+
+function getLocationMatchRank(location, query) {
+  const name = location.name.toLocaleLowerCase()
+  const aliases = (location.aliases || []).map((alias) => alias.toLocaleLowerCase())
+  if (name === query) return 0
+  if (name.startsWith(query)) return 1
+  if (name.includes(query)) return 2
+  if (aliases.some((alias) => alias.startsWith(query))) return 3
+  if (aliases.some((alias) => alias.includes(query))) return 4
+  return 5
+}
 
 function flagEmoji(code) {
   return /^[A-Z]{2}$/.test(code || '') ? [...code].map((letter) => String.fromCodePoint(127397 + letter.charCodeAt(0))).join('') : '🌐'
@@ -36,50 +59,87 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
   const [draft, setDraft] = useState(EMPTY_HANGOUT)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationOpen, setLocationOpen] = useState(false)
+  const [activeLocationIndex, setActiveLocationIndex] = useState(-1)
+  const selectedLocation = UBC_LOCATIONS.find((location) => location.id === draft.location)
+  const normalizedLocationQuery = locationQuery.trim().toLocaleLowerCase()
+  const matchingLocations = normalizedLocationQuery
+    ? UBC_LOCATIONS.filter((building) => {
+      const searchableText = [building.name, building.description, building.kind, ...(building.aliases || [])].join(' ').toLocaleLowerCase()
+      return searchableText.includes(normalizedLocationQuery)
+    }).sort((first, second) => {
+      const rankDifference = getLocationMatchRank(first, normalizedLocationQuery) - getLocationMatchRank(second, normalizedLocationQuery)
+      return rankDifference || first.name.localeCompare(second.name)
+    })
+    : UBC_LOCATIONS
+      .filter((building) => building.featured)
+      .sort((first, second) => POPULAR_LOCATION_ORDER.indexOf(first.id) - POPULAR_LOCATION_ORDER.indexOf(second.id))
+  const locationOptions = matchingLocations.slice(0, MAX_LOCATION_RESULTS)
 
   function update(field, value) {
     setDraft((previous) => ({ ...previous, [field]: value }))
     setError('')
   }
 
-  async function submit(event) {
+  function chooseLocation(location) {
+    setDraft((previous) => ({ ...previous, location: location.id }))
+    setLocationQuery(location.name)
+    setLocationOpen(false)
+    setActiveLocationIndex(-1)
+    setError('')
+  }
+
+  function handleLocationKeyDown(event) {
+    if (event.key === 'Escape') {
+      setLocationOpen(false)
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setLocationOpen(true)
+      setActiveLocationIndex((index) => Math.min(index + 1, locationOptions.length - 1))
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveLocationIndex((index) => Math.max(index - 1, 0))
+    } else if (event.key === 'Enter' && locationOpen && locationOptions[activeLocationIndex]) {
+      event.preventDefault()
+      chooseLocation(locationOptions[activeLocationIndex])
+    }
+  }
+
+  function submit(event) {
     event.preventDefault()
     if (saving) return
-    const start = Date.parse(draft.startsAt)
-    const end = Date.parse(draft.endsAt)
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    if (!selectedLocation) {
+      setError('Choose a location from the UBC campus list.')
+      setLocationOpen(true)
+      return
+    }
+    const startTime = Date.parse(draft.startsAt)
+    const endTime = Date.parse(draft.endsAt)
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) {
       setError('Choose valid start and end times. The end must be after the start.')
       return
     }
     setSaving(true)
     setError('')
-    try {
-      const point = await findHangoutLocation(draft.location.trim())
-      if (!point) {
-        setError('We couldn’t find that place. Try a building or street address with “Vancouver, BC”.')
-        return
-      }
-      onAdd({
-        id: createHangoutId(),
-        title: draft.title.trim(),
-        location: draft.location.trim(),
-        displayLocation: point.displayLocation,
-        latitude: point.latitude,
-        longitude: point.longitude,
-        description: draft.description.trim(),
-        startsAt: draft.startsAt,
-        endsAt: draft.endsAt,
-        author: { name: author.name || author.username || 'UBC student', nationality: author.nationality || '' },
-      })
-      setDraft(EMPTY_HANGOUT)
-      setComposerOpen(false)
-    } catch {
-      setError('Location search is unavailable right now. Please try again shortly.')
-    } finally {
-      setSaving(false)
-    }
+    onAdd({
+      id: createHangoutId(),
+      title: draft.title.trim(),
+      location: selectedLocation.name,
+      displayLocation: selectedLocation.name + ', UBC',
+      latitude: selectedLocation.latitude,
+      longitude: selectedLocation.longitude,
+      description: draft.description.trim(),
+      startsAt: draft.startsAt,
+      endsAt: draft.endsAt,
+      author: { name: author.name || author.username || 'UBC student', nationality: author.nationality || '' },
+    })
+    setDraft(EMPTY_HANGOUT)
+    setLocationQuery('')
+    setLocationOpen(false)
+    setComposerOpen(false)
+    setSaving(false)
   }
-
   return (
     <div className="hangouts-board">
       <header className="hangouts-board-heading">
@@ -92,15 +152,70 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
           <div className="hangout-composer-heading"><div><p className="eyebrow">INVITE SOMEONE ALONG</p><h3 id="hangout-composer-title">What are you planning?</h3></div><button type="button" aria-label="Close post form" onClick={() => setComposerOpen(false)}><CloseIcon /></button></div>
           <form onSubmit={submit} className="hangout-form">
             <label><span>Hangout name</span><input required maxLength={100} value={draft.title} onChange={(event) => update('title', event.target.value)} placeholder="e.g. Boba after class" /></label>
-            <label><span>Location</span><input required maxLength={240} value={draft.location} onChange={(event) => update('location', event.target.value)} placeholder="Building or street, Vancouver, BC" autoComplete="street-address" /></label>
+            <div className="hangout-form-location">
+              <label htmlFor="hangout-location-search">Location</label>
+              <div className="hangout-location-picker">
+                <input
+                  id="hangout-location-search"
+                  type="search"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={locationOpen}
+                  aria-controls="ubc-location-options"
+                  aria-activedescendant={locationOpen && activeLocationIndex >= 0 ? `ubc-location-option-${locationOptions[activeLocationIndex]?.id}` : undefined}
+                  aria-invalid={Boolean(error && !selectedLocation)}
+                  required
+                  value={locationQuery}
+                  onFocus={() => setLocationOpen(true)}
+                  onBlur={() => setLocationOpen(false)}
+                  onKeyDown={handleLocationKeyDown}
+                  onChange={(event) => {
+                    setLocationQuery(event.target.value)
+                    setDraft((previous) => ({ ...previous, location: '' }))
+                    setLocationOpen(true)
+                    setActiveLocationIndex(-1)
+                    setError('')
+                  }}
+                  placeholder="Search UBC buildings, cafes, parks, and more"
+                  autoComplete="off"
+                />
+                {locationOpen && (
+                  <ul id="ubc-location-options" className="hangout-location-options" role="listbox" aria-label="UBC campus locations">
+                    <li className="hangout-location-hint" role="presentation">
+                      {normalizedLocationQuery
+                        ? matchingLocations.length > MAX_LOCATION_RESULTS
+                          ? `Showing ${MAX_LOCATION_RESULTS} of ${matchingLocations.length} matches · keep typing to narrow down`
+                          : `${matchingLocations.length} matching ${matchingLocations.length === 1 ? 'location' : 'locations'}`
+                        : `Popular campus spots · search all ${UBC_LOCATIONS.length} locations`}
+                    </li>
+                    {locationOptions.length ? locationOptions.map((location, index) => (
+                      <li key={location.id} role="presentation">
+                        <button
+                          id={`ubc-location-option-${location.id}`}
+                          type="button"
+                          role="option"
+                          aria-selected={selectedLocation?.id === location.id || activeLocationIndex === index}
+                          className={activeLocationIndex === index ? 'is-active' : ''}
+                          onMouseDown={(clickEvent) => clickEvent.preventDefault()}
+                          onClick={() => chooseLocation(location)}
+                        >
+                          <span>{location.name}</span><small>{location.description} · {location.kind}</small>
+                        </button>
+                      </li>
+                    )) : <li className="hangout-location-empty" role="option" aria-disabled="true">No matching UBC locations</li>}
+                  </ul>
+                )}
+              </div>
+              {selectedLocation && <p className="hangout-location-confirmation">Map pin will use the saved coordinates for {selectedLocation.name}.</p>}
+            </div>
             <div className="hangout-time-fields">
               <label><span>Starts</span><input required type="datetime-local" value={draft.startsAt} onChange={(event) => update('startsAt', event.target.value)} /></label>
               <label><span>Ends</span><input required type="datetime-local" min={draft.startsAt || undefined} value={draft.endsAt} onChange={(event) => update('endsAt', event.target.value)} /></label>
             </div>
             <label><span>Details <small>Optional</small></span><textarea rows="3" maxLength={500} value={draft.description} onChange={(event) => update('description', event.target.value)} placeholder="Add a little context for people joining." /></label>
             {error && <p className="hangout-form-error" role="alert">{error}</p>}
-            <p className="hangout-privacy-note">We look up the location only when you post. The address is sent to OpenStreetMap; the post is saved in this browser for the demo.</p>
-            <button type="submit" className="hangout-submit-button" disabled={saving}>{saving ? 'Finding the place…' : 'Post and pin hangout'}{!saving && <ArrowIcon />}</button>
+            <p className="hangout-privacy-note">Choose a campus location from the list to use its saved coordinates. Posts are saved in this browser for the demo.</p>
+            <button type="submit" className="hangout-submit-button" disabled={saving}>{saving ? 'Saving hangout…' : 'Post and pin hangout'}{!saving && <ArrowIcon />}</button>
           </form>
         </section>
       )}

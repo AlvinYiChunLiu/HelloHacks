@@ -1,6 +1,4 @@
 const HANGOUTS_KEY = 'interbuddies.campus-hangouts.v1'
-const GEOCODER_URL = import.meta.env.VITE_GEOCODER_URL || 'https://nominatim.openstreetmap.org/search'
-let lastGeocodingRequestAt = 0
 
 function normalizeHangout(item) {
   if (!item || typeof item !== 'object' || typeof item.id !== 'string' || typeof item.title !== 'string') return null
@@ -51,24 +49,4 @@ export function saveHangouts(hangouts) {
 
 export function sortHangouts(hangouts = []) {
   return [...hangouts].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
-}
-
-export async function findHangoutLocation(query) {
-  const delay = Math.max(0, 1000 - (Date.now() - lastGeocodingRequestAt))
-  if (delay) await new Promise((resolve) => window.setTimeout(resolve, delay))
-  lastGeocodingRequestAt = Date.now()
-
-  const url = new URL(GEOCODER_URL)
-  url.searchParams.set('q', query)
-  url.searchParams.set('format', 'jsonv2')
-  url.searchParams.set('limit', '1')
-  const response = await fetch(url, { headers: { Accept: 'application/json' }, referrerPolicy: 'strict-origin-when-cross-origin' })
-  if (!response.ok) throw new Error('Location search unavailable')
-  const data = await response.json()
-  const result = Array.isArray(data) ? data[0] : null
-  const latitude = Number(result?.lat)
-  const longitude = Number(result?.lon)
-  return result && Number.isFinite(latitude) && Number.isFinite(longitude)
-    ? { latitude, longitude, displayLocation: result.display_name || query }
-    : null
 }

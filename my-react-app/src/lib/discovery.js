@@ -20,23 +20,43 @@ export function removeFilterChoice(filters, field, value) {
   return { ...filters, [field]: Array.isArray(filters[field]) ? filters[field].filter((choice) => choice !== value) : '' }
 }
 
-function savedKey(profile) {
+export const SAVED_BUDDIES_EVENT = 'interbuddies:saved-buddies-change'
+
+export function savedBuddiesStorageKey(profile) {
   return `interbuddies.saved-buddies:${encodeURIComponent(profile.id || profile.username || 'preview')}`
 }
 
-function cleanIds(value) {
-  return Array.isArray(value) ? [...new Set(value.filter((id) => typeof id === 'string' && id.length <= 120))].slice(0, 500) : []
+function cleanBuddyObjects(value) {
+  if (!Array.isArray(value)) return []
+  const unique = new Map()
+  for (const buddy of value) {
+    if (!buddy || typeof buddy !== 'object' || !['string', 'number'].includes(typeof buddy.id)) continue
+    const id = String(buddy.id)
+    if (!id || id.length > 120) continue
+    unique.set(id, buddy)
+  }
+  return [...unique.values()].slice(-500)
 }
 
 export function readSavedBuddies(profile) {
-  try { return cleanIds(JSON.parse(sessionStorage.getItem(savedKey(profile)) || '[]')) } catch { return [] }
+  try {
+    const stored = JSON.parse(localStorage.getItem(savedBuddiesStorageKey(profile)) || '[]')
+    return cleanBuddyObjects(stored)
+  } catch {
+    return []
+  }
 }
 
-export function saveBuddies(profile, ids) {
+export function saveBuddies(profile, buddies) {
+  const key = savedBuddiesStorageKey(profile)
+  const saved = cleanBuddyObjects(buddies)
   try {
-    sessionStorage.setItem(savedKey(profile), JSON.stringify(cleanIds(ids)))
+    localStorage.setItem(key, JSON.stringify(saved))
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(SAVED_BUDDIES_EVENT, { detail: { key } }))
     return true
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 
 export function conversationStarter(profile, buddy) {

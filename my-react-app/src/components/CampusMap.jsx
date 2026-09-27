@@ -4,6 +4,11 @@ import 'leaflet/dist/leaflet.css'
 import './CampusMap.css'
 
 const UBC_CENTER = [49.2668, -123.246]
+// This bounds the full UBC Vancouver campus footprint, including the south campus area.
+const UBC_CAMPUS_BOUNDS = L.latLngBounds(
+  [49.2425, -123.263],
+  [49.274, -123.227],
+)
 const TILE_URL = import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 function flagEmoji(countryCode) {
@@ -55,7 +60,13 @@ export default function CampusMap({ events, goingIds, selectedEventId, onSelectE
 
   useEffect(() => {
     if (!containerRef.current) return undefined
-    const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: true }).setView(UBC_CENTER, 14)
+    const map = L.map(containerRef.current, {
+      zoomControl: true,
+      scrollWheelZoom: true,
+      maxBounds: UBC_CAMPUS_BOUNDS,
+      maxBoundsViscosity: 1,
+      minZoom: 13,
+    }).setView(UBC_CENTER, 14)
     L.tileLayer(TILE_URL, {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>',
