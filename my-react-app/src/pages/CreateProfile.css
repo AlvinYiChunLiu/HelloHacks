@@ -233,10 +233,9 @@
   color: var(--muted);
 }
 .select-popover {
-  position: absolute;
-  z-index: 5;
-  top: calc(100% + 6px);
-  width: 100%;
+  position: fixed;
+  z-index: 9999;
+  box-sizing: border-box;
   overflow: hidden;
   border: 1px solid #cbd5e5;
   border-radius: 10px;
@@ -763,7 +762,7 @@
   accent-color: var(--primary);
 }
 .step-fields { animation: onboardingStepEnter 260ms cubic-bezier(.2,.75,.25,1) both; }
-@keyframes onboardingStepEnter { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes onboardingStepEnter { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
 .age-entry { position: relative; }
 .age-entry input { padding-right: 80px; }
 .age-entry > span { position: absolute; top: 50%; right: 13px; color: #7c899b; font-size: 11px; pointer-events: none; transform: translateY(-50%); }
