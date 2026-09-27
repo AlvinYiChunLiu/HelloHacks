@@ -47,7 +47,9 @@ export default function App() {
   const [draftColor, setDraftColor] = useState(null)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const navigateWorkspace = useRef(null)
-  const activeRoute = ['/main', '/edit-profile'].includes(route) && !profile ? '/sign-in' : route
+  const activeRoute = profile
+    ? ['/create-profile', '/sign-in', '/'].includes(route) ? '/main' : route
+    : ['/main', '/edit-profile'].includes(route) ? '/sign-in' : route
   const isForm = ['/create-profile', '/edit-profile'].includes(activeRoute)
   const isPersonalTheme = isForm || activeRoute === '/main'
   const themeColor = isForm
