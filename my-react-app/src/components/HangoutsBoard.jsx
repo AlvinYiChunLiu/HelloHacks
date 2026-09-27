@@ -35,7 +35,7 @@ function formatTime(value) {
   return new Date(value).toLocaleString('en', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
-export function HangoutCard({ event, onShowOnMap, onRemove, compact = false }) {
+export function HangoutCard({ event, onShowOnMap, onRemove, onViewAttendee, compact = false }) {
   const date = new Date(event.startsAt)
   return (
     <article className={`hangout-card${compact ? ' hangout-card--compact' : ''}`}>
@@ -46,6 +46,7 @@ export function HangoutCard({ event, onShowOnMap, onRemove, compact = false }) {
         <p className="hangout-card-time">{formatTime(event.startsAt)} <span aria-hidden="true">·</span> {new Date(event.endsAt).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' })}</p>
         <p className="hangout-card-place">{event.displayLocation || event.location}</p>
         {!compact && event.description && <p className="hangout-card-description">{event.description}</p>}
+        {!compact && <div className="hangout-card-attendees"><strong>Going ({event.attendees?.length || 0})</strong>{event.attendees?.length ? <ul>{event.attendees.map((person) => <li key={person.username}><button type="button" onClick={() => onViewAttendee?.(person)}>{person.name}</button></li>)}</ul> : <span>No one has registered yet.</span>}</div>}
         <button type="button" className="hangout-card-map-link" onClick={() => onShowOnMap(event.id)}>Show on map <ArrowIcon /></button>
       </div>
       {onRemove && <button type="button" className="hangout-card-remove" aria-label={`Remove ${event.title}`} onClick={() => onRemove(event.id)}><CloseIcon /></button>}
@@ -53,7 +54,7 @@ export function HangoutCard({ event, onShowOnMap, onRemove, compact = false }) {
   )
 }
 
-export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowOnMap }) {
+export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowOnMap, onViewAttendee }) {
   const [composerOpen, setComposerOpen] = useState(false)
   const [draft, setDraft] = useState(EMPTY_HANGOUT)
   const [error, setError] = useState('')
@@ -251,7 +252,7 @@ export default function HangoutsBoard({ events, author, onAdd, onRemove, onShowO
 
       <div className="hangouts-list-heading"><div><h3>Coming up</h3><p>Friendly plans to join around UBC.</p></div><span>{events.length}</span></div>
       <div className="hangouts-card-list">
-        {sortHangouts(events).map((event) => <HangoutCard key={event.id} event={event} onShowOnMap={onShowOnMap} onRemove={event.id.startsWith('demo-') || event.author?.username !== author.username ? undefined : async (id) => {
+        {sortHangouts(events).map((event) => <HangoutCard key={event.id} event={event} onShowOnMap={onShowOnMap} onViewAttendee={onViewAttendee} onRemove={event.id.startsWith('demo-') || event.author?.username !== author.username ? undefined : async (id) => {
           try { await onRemove(id) } catch (removeError) { setError(removeError.message || 'Unable to remove this hangout.') }
         }} />)}
       </div>
