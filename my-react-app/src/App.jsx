@@ -19,42 +19,50 @@ function readRoute() {
 function Welcome() {
   return (
     <main className="hero">
-      <ul className="hero-activity" aria-label="Sample UBC community activity">
-        <li className="hero-activity-card hero-activity-card--match">
-          <span className="hero-activity-icon" aria-hidden="true">✦</span>
-          <div><p className="hero-activity-label">Sample match</p><p className="hero-activity-title">Mei found 4 peers from China</p><p className="hero-activity-meta">Computer Science · Year 2</p></div>
-        </li>
-        <li className="hero-activity-card hero-activity-card--study">
-          <span className="hero-activity-icon" aria-hidden="true">↗</span>
-          <div><p className="hero-activity-label">Sample study group</p><p className="hero-activity-title">Brazilian biology students</p><p className="hero-activity-meta">Meeting at Koerner Library</p></div>
-        </li>
-        <li className="hero-activity-card hero-activity-card--hobby">
-          <span className="hero-activity-icon" aria-hidden="true">♡</span>
-          <div><p className="hero-activity-label">Sample shared interest</p><p className="hero-activity-title">Arjun found badminton fans</p><p className="hero-activity-meta">Engineering · Orchard Commons</p></div>
-        </li>
-      </ul>
       <div className="hero-content">
-        <svg className="buddy-illustration" viewBox="0 0 180 110" fill="none" aria-hidden="true">
-          <path d="M18 101c32 6 102 6 143-1" stroke="#cbd8ed" strokeWidth="2" strokeLinecap="round" />
-          <g transform="rotate(-12 60 58)">
-            <rect x="20" y="15" width="78" height="83" rx="37" fill="#f4c542" stroke="#dfa917" strokeWidth="1.5" />
-            <path d="M45 51v5m24-5v5m-23 14c6 7 15 7 22 0" stroke="#684c08" strokeWidth="3" strokeLinecap="round" />
-          </g>
-          <g transform="rotate(12 125 62)">
-            <rect x="86" y="22" width="75" height="79" rx="36" fill="#2457d6" />
-            <path d="M111 56v5m23-5v5m-23 12c6 7 15 7 22 0" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
-          </g>
-          <path d="m126 5-1 7m16-5-5 6M5 44l7 2" stroke="#cc3344" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-        <p className="eyebrow">UBC's international student community</p>
-        <h2 aria-label="Find your piece of home at UBC.">
-          <span className="hero-title-line" aria-hidden="true">Find your piece of</span>
-          <span className="hero-title-line" aria-hidden="true"><span className="hero-title-accent">home</span> at UBC.</span>
-        </h2>
-        <p className="hero-description">Connect with peers who share your home country, your major, and your hobbies.</p>
-        <a className="welcome-primary" href="#/create-profile">Create profile<ArrowIcon /></a>
-        <a className="sign-in-button" href="#/sign-in">Sign in</a>
-        <p className="hero-note">New faces. Real connections. Just be you.</p>
+        <div className="hero-copy">
+          <p className="eyebrow"><span className="hero-eyebrow-mark" aria-hidden="true" />UBC international student community</p>
+          <h2>Find your people.<br /><span className="hero-title-accent">Feel at home.</span></h2>
+          <p className="hero-description">A new country feels smaller when you know someone. Meet fellow students through shared backgrounds, classes, languages, and interests.</p>
+          <div className="welcome-actions">
+            <a className="welcome-primary" href="#/create-profile">Create your profile<ArrowIcon /></a>
+            <a className="sign-in-button" href="#/sign-in">Already a member? <strong>Sign in</strong></a>
+          </div>
+          <ul className="hero-highlights" aria-label="Ways to connect">
+            <li><span aria-hidden="true">✳</span>Shared roots</li>
+            <li><span aria-hidden="true">↗</span>New interests</li>
+            <li><span aria-hidden="true">⌂</span>One campus</li>
+          </ul>
+        </div>
+        <div className="hero-visual" aria-hidden="true">
+          <svg className="buddy-illustration" viewBox="0 0 480 420" fill="none">
+            <path d="M77 226c-6-74 42-142 113-161 65-17 133 5 174 53 43 51 47 131 12 191-35 61-101 91-173 78-75-14-120-79-126-161Z" fill="#F8EEDB" />
+            <path d="M118 180c41-70 122-100 202-72 44 15 76 49 91 92" stroke="#E0D1B8" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 9" />
+            <path d="M89 275c43 63 114 94 190 77 41-9 77-34 99-69" stroke="#E0D1B8" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 9" />
+            <circle cx="247" cy="206" r="108" fill="#F4C542" />
+            <circle cx="214" cy="190" r="5" fill="#684C08" />
+            <circle cx="278" cy="190" r="5" fill="#684C08" />
+            <path d="M215 222c9 13 22 19 34 19s25-6 34-19" stroke="#684C08" strokeWidth="6" strokeLinecap="round" />
+            <g transform="rotate(-12 122 146)">
+              <circle cx="122" cy="146" r="47" fill="#D96D5D" />
+              <circle cx="108" cy="139" r="3.5" fill="#fff" />
+              <circle cx="136" cy="139" r="3.5" fill="#fff" />
+              <path d="M109 157c4 6 8 9 13 9s10-3 13-9" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" />
+            </g>
+            <g transform="rotate(12 373 275)">
+              <circle cx="373" cy="275" r="57" fill="#3765C9" />
+              <circle cx="356" cy="267" r="4" fill="#fff" />
+              <circle cx="390" cy="267" r="4" fill="#fff" />
+              <path d="M357 288c5 7 10 10 16 10s12-3 17-10" stroke="#fff" strokeWidth="4" strokeLinecap="round" />
+            </g>
+            <circle cx="345" cy="103" r="18" fill="#B9CFB4" />
+            <path d="m344 99 3 4-3 5" stroke="#456747" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="m85 90 4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1 4-8Z" fill="#E6B43B" />
+            <circle cx="402" cy="160" r="5" fill="#D96D5D" />
+            <circle cx="110" cy="322" r="6" fill="#3765C9" />
+          </svg>
+          <p className="hero-visual-caption"><span>Different stories.</span> One campus community.</p>
+        </div>
       </div>
     </main>
   )

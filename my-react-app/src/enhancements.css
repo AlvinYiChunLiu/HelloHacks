@@ -1,4 +1,4 @@
-/* Shared refinements for the signed-in experience. The welcome page is unchanged. */
+/* Shared refinements for the signed-in experience. */
 .home.dashboard-shell { max-width: 1560px; padding-inline: clamp(20px, 3.5vw, 56px); }
 .dashboard-shell .site-header { padding-bottom: 22px; border-bottom: 1px solid var(--line); }
 .dashboard-shell .brand h1 { font-size: 25px; }
