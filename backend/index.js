@@ -24,6 +24,7 @@ const db = new sqlite3.Database(databasePath, async (error) => {
 
   try {
     await ensureUsersTable();
+    await ensureEventsTable();
   } catch (databaseError) {
     console.error('Database setup failed:', databaseError.message);
     process.exit(1);
@@ -135,6 +136,30 @@ function ensureUsersTable() {
   });
 }
 
+function ensureEventsTable() {
+  return new Promise((resolve, reject) => {
+    db.all('PRAGMA table_info(events)', (error, columns) => {
+      if (error) return reject(error);
+      if (!columns?.length) return reject(new Error('The events table does not exist.'));
+      const available = new Set(columns.map((column) => column.name));
+      const migrations = [
+        ['ends_at', "ALTER TABLE events ADD COLUMN ends_at TEXT NOT NULL DEFAULT ''"],
+        ['latitude', 'ALTER TABLE events ADD COLUMN latitude REAL'],
+        ['longitude', 'ALTER TABLE events ADD COLUMN longitude REAL'],
+        ['display_location', "ALTER TABLE events ADD COLUMN display_location TEXT NOT NULL DEFAULT ''"],
+        ['author_username', "ALTER TABLE events ADD COLUMN author_username TEXT NOT NULL DEFAULT ''"],
+        ['author_nationality', "ALTER TABLE events ADD COLUMN author_nationality TEXT NOT NULL DEFAULT ''"],
+      ].filter(([column]) => !available.has(column));
+      const addNext = () => {
+        const migration = migrations.shift();
+        if (!migration) return resolve();
+        db.run(migration[1], (migrationError) => migrationError ? reject(migrationError) : addNext());
+      };
+      addNext();
+    });
+  });
+}
+
 app.use(cors());
 app.use(express.json({ limit: '16kb' }));
 
@@ -172,6 +197,66 @@ app.get('/api/users', (req, res) => {
     }));
 
     return res.json(normalized);
+  });
+});
+
+app.get('/api/events', (req, res) => {
+  db.all(`SELECT rowid AS id, event_name, host_name, location, date_time, description,
+    display_location, latitude, longitude, ends_at, author_username, author_nationality
+    FROM events ORDER BY date_time ASC`, (error, rows) => {
+    if (error) return res.status(500).json({ error: 'Unable to load events.' });
+    return res.json((rows || []).map((row) => ({
+      id: String(row.id),
+      title: row.event_name,
+      description: row.description,
+      location: row.location,
+      displayLocation: row.display_location || `${row.location}, UBC`,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      startsAt: row.date_time,
+      endsAt: row.ends_at || new Date(Date.parse(row.date_time) + 60 * 60 * 1000).toISOString(),
+      author: { name: row.host_name || 'UBC student', username: row.author_username, nationality: row.author_nationality },
+    })));
+  });
+});
+
+app.post('/api/events', (req, res) => {
+  const event = req.body || {};
+  const requiredStrings = ['id', 'title', 'location', 'startsAt', 'endsAt'];
+  if (requiredStrings.some((key) => typeof event[key] !== 'string' || !event[key].trim())) {
+    return res.status(400).json({ error: 'Event title, location, and dates are required.' });
+  }
+  const latitude = Number(event.latitude);
+  const longitude = Number(event.longitude);
+  const startsAt = Date.parse(event.startsAt);
+  const endsAt = Date.parse(event.endsAt);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180 || !Number.isFinite(startsAt) || !Number.isFinite(endsAt) || endsAt <= startsAt) {
+    return res.status(400).json({ error: 'Choose valid coordinates and an end time after the start.' });
+  }
+  const title = event.title.trim().slice(0, 100);
+  const description = typeof event.description === 'string' ? event.description.trim().slice(0, 500) : '';
+  const location = event.location.trim().slice(0, 240);
+  const displayLocation = typeof event.displayLocation === 'string' ? event.displayLocation.trim().slice(0, 300) : location;
+  const authorName = typeof event.author?.name === 'string' ? event.author.name.trim().slice(0, 80) : 'UBC student';
+  const authorUsername = typeof event.author?.username === 'string' ? event.author.username.trim().toLowerCase().slice(0, 24) : '';
+  const authorNationality = typeof event.author?.nationality === 'string' ? event.author.nationality.trim().toUpperCase().slice(0, 2) : '';
+  db.run(`INSERT INTO events (event_name, host_name, location, date_time, description, display_location, latitude, longitude, ends_at, author_username, author_nationality)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [title, authorName || 'UBC student', location, event.startsAt, description, displayLocation, latitude, longitude, event.endsAt, authorUsername, authorNationality], function (error) {
+    if (error) {
+      console.error('Event insert failed:', error.message);
+      return res.status(500).json({ error: 'Unable to save this event.' });
+    }
+    return res.status(201).json({ event: { id: String(this.lastID), title, description, location, displayLocation, latitude, longitude, startsAt: event.startsAt, endsAt: event.endsAt, author: { name: authorName || 'UBC student', username: authorUsername, nationality: authorNationality } } });
+  });
+});
+
+app.delete('/api/events/:id', (req, res) => {
+  const username = typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
+  if (!username) return res.status(400).json({ error: 'Event author is required.' });
+  db.run('DELETE FROM events WHERE rowid = ? AND author_username = ?', [Number(req.params.id), username], function (error) {
+    if (error) return res.status(500).json({ error: 'Unable to remove this event.' });
+    if (!this.changes) return res.status(404).json({ error: 'Event not found or not owned by this account.' });
+    return res.json({ deleted: true });
   });
 });
 
