@@ -33,6 +33,7 @@ function normalizeBackendUser(user) {
     username: user.username || `user_${user.id}`,
     nationality: user.nationality || '',
     gender: 'prefer-not-to',
+    avatar: user.avatar || (user.avatar_url ? { type: 'photo', value: `http://localhost:5000${user.avatar_url}` } : null),
     university: user.university || 'University of British Columbia',
     residence: user.residence || 'Not selected',
     year: Number(user.year) || 1,
@@ -366,12 +367,18 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
         if (!response.ok) throw new Error('Unable to load campus hangouts.')
         return response.json()
       })
-      .then((events) => {
-        if (active) setUserHangouts(Array.isArray(events) ? events.map((event) => ({
+      .then(async (events) => {
+        const loadedEvents = Array.isArray(events) ? await Promise.all(events.map(async (event) => {
+          const response = await fetch(`http://localhost:5000/api/events/${encodeURIComponent(event.id)}/attendees`)
+          const attendees = response.ok ? await response.json() : []
+          return {
           ...event,
+          attendees: Array.isArray(attendees) ? attendees : [],
           latitude: Number.isFinite(Number(event.latitude)) && event.latitude !== null ? Number(event.latitude) : 49.2606,
           longitude: Number.isFinite(Number(event.longitude)) && event.longitude !== null ? Number(event.longitude) : -123.246,
-        })) : [])
+          }
+        })) : []
+        if (active) setUserHangouts(loadedEvents)
       })
       .catch((error) => {
         console.error('Failed to load events:', error)
@@ -379,6 +386,18 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
       })
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    let active = true
+    fetch(`http://localhost:5000/api/events/rsvps?username=${encodeURIComponent(profile.username)}`)
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load event registrations.')
+        return response.json()
+      })
+      .then(({ eventIds }) => { if (active) setGoingIds(new Set(Array.isArray(eventIds) ? eventIds : [])) })
+      .catch((error) => console.error('Failed to load event registrations:', error))
+    return () => { active = false }
+  }, [profile.username])
 
   const buddies = useMemo(() => backendUsers.map(normalizeBackendUser), [backendUsers])
   const matches = getBuddyMatches(profile, buddies)
@@ -437,10 +456,32 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
     setSection('map')
   }
 
-  function markGoing(event) {
-    if (goingIds.has(event.id)) return
-    setGoingIds((previous) => new Set(previous).add(event.id))
-    showFeedback('You’re on the demo guest list. Nothing was sent.')
+  async function toggleGoing(event) {
+    const wasGoing = goingIds.has(event.id)
+    const response = await fetch(`http://localhost:5000/api/events/${encodeURIComponent(event.id)}/rsvp`, {
+      method: wasGoing ? 'DELETE' : 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: profile.username }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      if (wasGoing && response.status === 404) {
+        setGoingIds((previous) => { const next = new Set(previous); next.delete(event.id); return next })
+      }
+      showFeedback(payload.error || 'Unable to update your event registration.')
+      return
+    }
+    setGoingIds((previous) => {
+      const next = new Set(previous)
+      if (wasGoing) next.delete(event.id)
+      else next.add(event.id)
+      return next
+    })
+    fetch(`http://localhost:5000/api/events/${encodeURIComponent(event.id)}/attendees`)
+      .then((attendeeResponse) => attendeeResponse.ok ? attendeeResponse.json() : [])
+      .then((attendees) => setUserHangouts((previous) => previous.map((item) => item.id === event.id ? { ...item, attendees: Array.isArray(attendees) ? attendees : [] } : item)))
+      .catch((error) => console.error('Failed to refresh event attendees:', error))
+    showFeedback(wasGoing ? 'Your event registration was canceled.' : 'You’re on the guest list.')
   }
 
   async function addHangout(event) {
@@ -508,13 +549,12 @@ export default function MainPage({ profile, onEdit, registerNavigate }) {
                 <button type="button" className="workspace-primary-button" onClick={() => setSection('hangouts')}><span aria-hidden="true">＋</span> Post a hangout</button>
               </header>
               <div className="campus-map-layout">
-                <div className="campus-map-frame"><CampusMap events={hangouts} goingIds={goingIds} selectedEventId={selectedHangoutId} onSelectEvent={setSelectedHangoutId} onGoing={markGoing} /><p className="map-demo-caption">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>.</p></div>
+                <div className="campus-map-frame"><CampusMap events={hangouts} goingIds={goingIds} selectedEventId={selectedHangoutId} onSelectEvent={setSelectedHangoutId} onGoing={toggleGoing} /><p className="map-demo-caption">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>.</p></div>
                 <aside className="map-coming-up" aria-labelledby="coming-up-title">
                   <div className="map-coming-up-heading"><div><p className="eyebrow">ON CAMPUS</p><h3 id="coming-up-title">Coming up</h3></div><span>{hangouts.length}</span></div>
                   <p className="map-coming-up-caption">Choose a plan to open its map pin.</p>
                   <div className="map-coming-up-list">{hangouts.slice(0, 4).map((event) => <HangoutCard key={event.id} event={event} compact onShowOnMap={selectHangout} />)}</div>
                   <button type="button" className="map-all-hangouts" onClick={() => setSection('hangouts')}>Explore all hangouts <ArrowIcon /></button>
-                  <p className="map-rsvp-note">RSVPs are demo-only and stay in this browser.</p>
                 </aside>
               </div>
             </section>

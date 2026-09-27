@@ -39,17 +39,32 @@ function popupContent(event, isGoing, onGoing) {
   const place = document.createElement('span')
   place.className = 'hangout-popup-place'
   place.textContent = event.displayLocation || event.location
+  const attendeeHeading = document.createElement('span')
+  attendeeHeading.className = 'hangout-popup-attendee-heading'
+  attendeeHeading.textContent = `Going (${event.attendees?.length || 0})`
+  const attendees = document.createElement('ul')
+  attendees.className = 'hangout-popup-attendees'
+  if (event.attendees?.length) {
+    event.attendees.forEach((person) => {
+      const item = document.createElement('li')
+      item.textContent = `${person.name}  @${person.username}`
+      attendees.append(item)
+    })
+  } else {
+    const item = document.createElement('li')
+    item.textContent = 'No one has registered yet.'
+    attendees.append(item)
+  }
   const button = document.createElement('button')
   button.type = 'button'
   button.className = `hangout-rsvp-button${isGoing ? ' is-going' : ''}`
-  button.textContent = isGoing ? '✓  You’re going' : 'I’m going'
+  button.textContent = isGoing ? 'Cancel registration' : 'I’m going'
   button.setAttribute('aria-pressed', String(isGoing))
-  button.disabled = isGoing
   button.addEventListener('click', (clickEvent) => {
     clickEvent.stopPropagation()
     onGoing(event)
   })
-  card.append(label, title, author, time, place, button)
+  card.append(label, title, author, time, place, attendeeHeading, attendees, button)
   return card
 }
 

@@ -4,6 +4,8 @@ import express from 'express';
 import cors from 'cors';
 import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'node:url';
+import { mkdir, writeFile, unlink } from 'node:fs/promises';
+import path from 'node:path';
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
@@ -13,6 +15,7 @@ const SCRYPT_OPTIONS = { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 };
 const app = express();
 const PORT = process.env.PORT || 5000;
 const databasePath = fileURLToPath(new URL('./my.db', import.meta.url));
+const uploadDirectory = fileURLToPath(new URL('./uploads/', import.meta.url));
 
 const db = new sqlite3.Database(databasePath, async (error) => {
   if (error) {
@@ -24,7 +27,9 @@ const db = new sqlite3.Database(databasePath, async (error) => {
 
   try {
     await ensureUsersTable();
+    await ensureUserAvatarColumn();
     await ensureEventsTable();
+    await ensureEventRsvpsTable();
   } catch (databaseError) {
     console.error('Database setup failed:', databaseError.message);
     process.exit(1);
@@ -136,6 +141,16 @@ function ensureUsersTable() {
   });
 }
 
+function ensureUserAvatarColumn() {
+  return new Promise((resolve, reject) => {
+    db.all('PRAGMA table_info(users)', (error, columns) => {
+      if (error) return reject(error);
+      if ((columns || []).some((column) => column.name === 'avatar_url')) return resolve();
+      db.run('ALTER TABLE users ADD COLUMN avatar_url TEXT NOT NULL DEFAULT \'\'', (alterError) => alterError ? reject(alterError) : resolve());
+    });
+  });
+}
+
 function ensureEventsTable() {
   return new Promise((resolve, reject) => {
     db.all('PRAGMA table_info(events)', (error, columns) => {
@@ -160,8 +175,44 @@ function ensureEventsTable() {
   });
 }
 
+function ensureEventRsvpsTable() {
+  return new Promise((resolve, reject) => {
+    db.run(`CREATE TABLE IF NOT EXISTS event_rsvps (
+      event_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (event_id, username),
+      FOREIGN KEY (event_id) REFERENCES events(rowid) ON DELETE CASCADE,
+      FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+    )`, (error) => error ? reject(error) : resolve());
+  });
+}
+
 app.use(cors());
-app.use(express.json({ limit: '16kb' }));
+app.use(express.json({ limit: '512kb' }));
+app.use('/uploads', express.static(uploadDirectory, { fallthrough: false, maxAge: '1d' }));
+
+function decodeProfilePhoto(value) {
+  const match = typeof value === 'string' && /^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+  if (!match || match[1].length % 4 !== 0) return null;
+  const bytes = Buffer.from(match[1], 'base64');
+  if (bytes.length > 256 * 1024 || bytes.length < 20 || bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff || bytes.at(-2) !== 0xff || bytes.at(-1) !== 0xd9) return null;
+  return bytes;
+}
+
+async function saveProfilePhoto(username, dataUrl) {
+  if (dataUrl === null) return '';
+  const bytes = decodeProfilePhoto(dataUrl);
+  if (!bytes) throw new Error('Choose a valid JPG profile photo smaller than 256 KB.');
+  await mkdir(uploadDirectory, { recursive: true });
+  const filename = `${username}-${randomBytes(8).toString('hex')}.jpg`;
+  await writeFile(path.join(uploadDirectory, filename), bytes, { flag: 'wx' });
+  return `/uploads/${filename}`;
+}
+
+function publicPhotoUrl(avatarUrl) {
+  return avatarUrl ? `http://localhost:${PORT}${avatarUrl}` : '';
+}
 
 app.get('/', (req, res) => {
   res.send('HelloHacks backend is running');
@@ -190,6 +241,7 @@ app.get('/api/users', (req, res) => {
 
     const normalized = (rows || []).map((row) => ({
       ...row,
+      avatar: row.avatar_url ? { type: 'photo', value: publicPhotoUrl(row.avatar_url) } : null,
       hobbies: readJsonArray(row.hobbies),
       sports: readJsonArray(row.sports),
       languages: readJsonArray(row.languages ?? '[]'),
@@ -217,6 +269,56 @@ app.get('/api/events', (req, res) => {
       endsAt: row.ends_at || new Date(Date.parse(row.date_time) + 60 * 60 * 1000).toISOString(),
       author: { name: row.host_name || 'UBC student', username: row.author_username, nationality: row.author_nationality },
     })));
+  });
+});
+
+app.get('/api/events/rsvps', (req, res) => {
+  const username = typeof req.query.username === 'string' ? req.query.username.trim().toLowerCase() : '';
+  if (!username) return res.status(400).json({ error: 'Username is required.' });
+  db.all('SELECT event_id FROM event_rsvps WHERE username = ?', [username], (error, rows) => {
+    if (error) return res.status(500).json({ error: 'Unable to load your event registrations.' });
+    return res.json({ eventIds: (rows || []).map((row) => String(row.event_id)) });
+  });
+});
+
+app.get('/api/events/:id/attendees', (req, res) => {
+  db.all(`SELECT u.id, u.name, u.username, u.nationality, u.avatar_url
+    FROM event_rsvps r JOIN users u ON lower(u.username) = r.username
+    WHERE r.event_id = ? ORDER BY lower(u.name), lower(u.username)`, [Number(req.params.id)], (error, rows) => {
+    if (error) return res.status(500).json({ error: 'Unable to load event attendees.' });
+    return res.json((rows || []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      username: row.username,
+      nationality: row.nationality,
+      avatar: row.avatar_url ? { type: 'photo', value: publicPhotoUrl(row.avatar_url) } : null,
+    })));
+  });
+});
+
+app.put('/api/events/:id/rsvp', (req, res) => {
+  const username = typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
+  if (!username) return res.status(400).json({ error: 'Username is required.' });
+  db.run('INSERT OR IGNORE INTO event_rsvps (event_id, username) SELECT rowid, ? FROM events WHERE rowid = ?', [username, Number(req.params.id)], function (error) {
+    if (error) return res.status(500).json({ error: 'Unable to register for this event.' });
+    if (!this.changes) {
+      return db.get('SELECT 1 AS registered FROM event_rsvps WHERE event_id = ? AND username = ?', [Number(req.params.id), username], (lookupError, row) => {
+        if (lookupError) return res.status(500).json({ error: 'Unable to register for this event.' });
+        if (row) return res.json({ going: true });
+        return res.status(404).json({ error: 'Event not found.' });
+      });
+    }
+    return res.json({ going: true });
+  });
+});
+
+app.delete('/api/events/:id/rsvp', (req, res) => {
+  const username = typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
+  if (!username) return res.status(400).json({ error: 'Username is required.' });
+  db.run('DELETE FROM event_rsvps WHERE event_id = ? AND username = ?', [Number(req.params.id), username], function (error) {
+    if (error) return res.status(500).json({ error: 'Unable to cancel this event registration.' });
+    if (!this.changes) return res.status(404).json({ error: 'Registration not found.' });
+    return res.json({ going: false });
   });
 });
 
@@ -308,6 +410,7 @@ app.post('/api/login', async (req, res) => {
           sports: readJsonArray(row.sports),
           languages: readJsonArray(row.languages ?? '[]'),
           socialMedia: readJsonArray(row.social_media ?? '[]'),
+          avatar: row.avatar_url ? { type: 'photo', value: publicPhotoUrl(row.avatar_url) } : null,
           favoriteColor: '#2457d6',
           gender: 'prefer-not-to',
         },
@@ -385,6 +488,9 @@ app.post('/api/users', async (req, res) => {
   const languages = Array.isArray(body.languages) ? body.languages : [];
   const socialMedia = Array.isArray(body.socialMedia) ? body.socialMedia : [];
   const password = String(body.password);
+  if (body.avatar?.type === 'photo' && !decodeProfilePhoto(body.avatar.value)) {
+    return res.status(400).json({ field: 'avatar', error: 'Choose a valid JPG profile photo smaller than 256 KB.' });
+  }
 
   if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
     return res.status(400).json({ field: 'username', error: 'Use 3–24 letters, numbers, or underscores.' });
@@ -414,8 +520,8 @@ app.post('/api/users', async (req, res) => {
   }
 
   const insertSql = `INSERT INTO users (
-    name, username, nationality, university, residence, year, major, hobbies, sports, languages, email, password_hash, social_media
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    name, username, nationality, university, residence, year, major, hobbies, sports, languages, email, password_hash, social_media, avatar_url
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const values = [
     name,
@@ -431,9 +537,10 @@ app.post('/api/users', async (req, res) => {
     email,
     passwordHash,
     JSON.stringify(socialMedia),
+    '',
   ];
 
-  db.run(insertSql, values, function (error) {
+  db.run(insertSql, values, async function (error) {
     if (error) {
       if (String(error.message).includes('UNIQUE constraint failed: users.username')) {
         return res.status(409).json({ field: 'username', error: 'That username is already in use.' });
@@ -447,6 +554,17 @@ app.post('/api/users', async (req, res) => {
       return res.status(500).json({ error: 'Unable to save your profile.' });
     }
 
+    let avatar = null;
+    if (body.avatar?.type === 'photo') {
+      try {
+        const avatarUrl = await saveProfilePhoto(username, body.avatar.value);
+        await new Promise((resolve, reject) => db.run('UPDATE users SET avatar_url = ? WHERE id = ?', [avatarUrl, this.lastID], (updateError) => updateError ? reject(updateError) : resolve()));
+        avatar = { type: 'photo', value: publicPhotoUrl(avatarUrl) };
+      } catch (photoError) {
+        console.error('Profile photo save failed:', photoError.message);
+        return res.status(500).json({ error: 'Your account was created, but the profile photo could not be saved. Edit your profile to try again.' });
+      }
+    }
     return res.status(201).json({
       profile: {
         id: this.lastID,
@@ -461,9 +579,34 @@ app.post('/api/users', async (req, res) => {
         sports,
         languages,
         socialMedia,
+        avatar,
         email,
       },
     });
+  });
+});
+
+app.put('/api/users/:username/avatar', async (req, res) => {
+  const username = String(req.params.username || '').trim().toLowerCase();
+  const dataUrl = req.body?.avatar;
+  if (dataUrl !== null && typeof dataUrl !== 'string') return res.status(400).json({ error: 'A profile photo or null is required.' });
+  if (dataUrl !== null && !decodeProfilePhoto(dataUrl)) return res.status(400).json({ error: 'Choose a valid JPG profile photo smaller than 256 KB.' });
+  db.get('SELECT avatar_url FROM users WHERE username = ?', [username], async (error, row) => {
+    if (error) return res.status(500).json({ error: 'Unable to update your profile photo.' });
+    if (!row) return res.status(404).json({ error: 'Profile not found.' });
+    try {
+      const avatarUrl = dataUrl === null ? '' : await saveProfilePhoto(username, dataUrl);
+      db.run('UPDATE users SET avatar_url = ? WHERE username = ?', [avatarUrl, username], async (updateError) => {
+        if (updateError) {
+          if (avatarUrl) await unlink(path.join(uploadDirectory, path.basename(avatarUrl))).catch(() => {});
+          return res.status(500).json({ error: 'Unable to update your profile photo.' });
+        }
+        if (row.avatar_url && row.avatar_url !== avatarUrl) await unlink(path.join(uploadDirectory, path.basename(row.avatar_url))).catch(() => {});
+        return res.json({ avatar: avatarUrl ? { type: 'photo', value: publicPhotoUrl(avatarUrl) } : null });
+      });
+    } catch (saveError) {
+      return res.status(500).json({ error: saveError.message || 'Unable to save your profile photo.' });
+    }
   });
 });
 

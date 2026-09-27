@@ -69,6 +69,7 @@ export function registrationPayload(profile) {
     // The current frontend-only registration contract still requires an email.
     email: `${username}@accounts.interbuddies.invalid`,
     socialMedia: (profile.socialMedia || []).map(({ platform, username: socialUsername }) => ({ platform, username: socialUsername.trim() })),
+    avatar: normalizeAvatar(profile.avatar),
   }
 }
 

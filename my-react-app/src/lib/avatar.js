@@ -30,7 +30,7 @@ export function normalizeAvatar(avatar) {
   if (avatar.type === 'smiley' && smileyIds.has(avatar.value)) {
     return { type: 'smiley', value: avatar.value }
   }
-  if (avatar.type === 'photo' && validRasterDataUrl(avatar.value)) {
+  if (avatar.type === 'photo' && (validRasterDataUrl(avatar.value) || /^http:\/\/localhost:5000\/uploads\/[a-z0-9_-]+\.jpg$/i.test(avatar.value))) {
     return { type: 'photo', value: avatar.value }
   }
   return null

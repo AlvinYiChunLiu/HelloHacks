@@ -222,7 +222,33 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
     }
 
     if (isEditing) {
-      onComplete(profileChanges(profile))
+      const changes = profileChanges(profile)
+      const oldPhoto = initialProfile?.avatar?.type === 'photo'
+      const nextPhoto = changes.avatar?.type === 'photo' ? changes.avatar.value : null
+      if (nextPhoto?.startsWith('http://localhost:5000/uploads/')) {
+        onComplete(changes)
+        return
+      }
+      if (nextPhoto || oldPhoto) {
+        setSubmitting(true)
+        setServerError('')
+        try {
+          const response = await fetch(`http://localhost:5000/api/users/${encodeURIComponent(initialProfile.username)}/avatar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatar: nextPhoto }),
+          })
+          const result = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(result.error || 'Unable to save your profile photo.')
+          onComplete({ ...changes, avatar: result.avatar || changes.avatar })
+        } catch (error) {
+          setServerError(error.message || 'Unable to save your profile photo.')
+        } finally {
+          setSubmitting(false)
+        }
+        return
+      }
+      onComplete(changes)
       return
     }
 
@@ -254,7 +280,7 @@ export default function CreateProfile({ onComplete, onExit, onColorChange, initi
       if (!result?.profile?.id) throw new Error('Unexpected registration response')
       clearRegistrationDraft()
       const changes = profileChanges(profile)
-      onComplete({ ...result.profile, favoriteColor: changes.favoriteColor, languages: changes.languages, gender: changes.gender, avatar: changes.avatar, socialMedia: changes.socialMedia })
+      onComplete({ ...result.profile, favoriteColor: changes.favoriteColor, languages: changes.languages, gender: changes.gender, avatar: result.profile.avatar || changes.avatar, socialMedia: changes.socialMedia })
     } catch {
       if (requestRef.current === controller) setServerError('We couldn’t connect. Please try again in a moment.')
     } finally {
