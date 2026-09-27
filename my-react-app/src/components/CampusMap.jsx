@@ -65,7 +65,7 @@ export default function CampusMap({ events, goingIds, selectedEventId, onSelectE
       scrollWheelZoom: true,
       maxBounds: UBC_CAMPUS_BOUNDS,
       maxBoundsViscosity: 1,
-      minZoom: 13,
+      minZoom: 14,
     }).setView(UBC_CENTER, 14)
     L.tileLayer(TILE_URL, {
       maxZoom: 19,
